@@ -1,0 +1,20 @@
+CineBook — your booking is reserved
+
+Hello {{ booking.customer_name }},
+
+Booking reference: {{ booking.confirmation_token }}
+Movie: {{ showtime.movie.title }}
+Theatre: {{ theatre.name }}, {{ theatre.address }} ({{ theatre.city }})
+Screen: {{ showtime.screen.name }}
+Showtime: {{ showtime.show_date }} at {{ showtime.show_time }}
+Seats: {{ booking.selected_seats|join:", " }}
+Tickets:
+{% for ticket in ticket_breakdown %}{{ ticket.seat }}: ₹{{ ticket.price }}
+{% endfor %}
+Total due at the cinema: ₹{{ booking.total_paid }}
+
+No online payment was collected.
+Verify this ticket: {{ verification_url }}
+
+Your ticket's QR code is attached. It only contains the secure verification
+link and does not encode personal details.

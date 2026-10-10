@@ -1,0 +1,16 @@
+{% extends 'movies/base.html' %}
+
+{% block title %}Page not found | CineBook{% endblock %}
+
+{% block content %}
+<div class="container-xl page-shell">
+    <div class="empty-state">
+        <span class="eyebrow">SCENE NOT FOUND</span>
+        <h1>That page isn't showing here.</h1>
+        <p>The link may be out of date, or the film may have left the catalogue.</p>
+        <a href="{% url 'movie_list' %}" class="btn btn-cine-primary mt-3">
+            Browse movies
+        </a>
+    </div>
+</div>
+{% endblock %}

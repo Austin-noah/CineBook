@@ -1,0 +1,49 @@
+{% extends 'movies/base.html' %}
+
+{% block title %}About &amp; Credits | CineBook{% endblock %}
+
+{% block content %}
+<div class="container-xl page-shell">
+    <section class="credits-card">
+        <span class="eyebrow">ABOUT CINEBOOK</span>
+        <h1>Movie night, made simple.</h1>
+        <p>
+            CineBook is a demonstration movie catalogue, review and seat
+            reservation project. Theatre and showtime records marked DEMO are
+            sample data, not real cinema listings.
+        </p>
+        <h2>Optional TMDB integration</h2>
+        <a class="tmdb-brand" href="https://www.themoviedb.org/" rel="noopener noreferrer">
+            <img src="https://www.themoviedb.org/assets/2/v4/logos/short/blue.svg"
+                 alt="The Movie Database (TMDB)"
+                 width="154"
+                 height="48"
+                 data-image-fallback>
+            <span class="image-text-fallback" hidden aria-hidden="true">TMDB</span>
+        </a>
+        <p>
+            CineBook does not call TMDB automatically. The integration is
+            optional and only runs when an administrator explicitly starts the
+            artwork importer. If TMDB data is used, display this disclaimer:
+            “This product uses the TMDB API but is not endorsed or certified by TMDB.”
+        </p>
+        <p>
+            Imported artwork and catalogue ratings must be sourced and used
+            according to TMDB's terms and applicable rights. Until configured,
+            CineBook uses local fallback artwork or administrator-entered
+            image URLs.
+        </p>
+        <p>
+            API documentation:
+            <a href="https://developer.themoviedb.org/docs/getting-started">Getting started</a>
+            ·
+            <a href="https://developer.themoviedb.org/docs/image-basics">Image URL basics</a>
+        </p>
+        <h2 id="contact">Contact</h2>
+        <p>
+            This local demonstration has no live support contact. Configure
+            your own verified contact details before deploying it publicly.
+        </p>
+    </section>
+</div>
+{% endblock %}

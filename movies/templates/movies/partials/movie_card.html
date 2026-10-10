@@ -1,0 +1,49 @@
+<article class="movie-card">
+    <a class="poster-frame"
+       href="{% url 'movie_detail' movie.pk %}?city={{ selected_city|urlencode }}"
+       aria-label="View {{ movie.title }}">
+        {% if movie.poster_url %}
+            <img class="movie-poster"
+                 src="{{ movie.poster_url }}"
+                 alt="{{ movie.title }} poster"
+                 loading="lazy"
+                 data-image-fallback>
+            <div class="poster-placeholder" hidden aria-hidden="true">
+                <span>{{ movie.title|slice:":1" }}</span>
+                <small>{{ movie.title }}</small>
+            </div>
+        {% else %}
+            <div class="poster-placeholder" aria-hidden="true">
+                <span>{{ movie.title|slice:":1" }}</span>
+                <small>{{ movie.title }}</small>
+            </div>
+        {% endif %}
+        <span class="poster-status">{{ movie.get_status_display }}</span>
+    </a>
+    <div class="movie-card-copy">
+        <div class="card-title-row">
+            <h3><a href="{% url 'movie_detail' movie.pk %}?city={{ selected_city|urlencode }}">{{ movie.title }}</a></h3>
+            {% if movie.catalogue_rating is not None %}
+                <span class="catalogue-badge" title="External catalogue rating out of 10">
+                    {{ movie.catalogue_rating }}/10
+                    {% if movie.catalogue_rating_source %}
+                        <small>{{ movie.catalogue_rating_source }}</small>
+                    {% endif %}
+                </span>
+            {% endif %}
+        </div>
+        <p class="card-genre">{{ movie.genre }} <span>·</span> {{ movie.language }}</p>
+        <div class="card-foot">
+            <span>{{ movie.duration }} min</span>
+            {% if movie.average_rating %}
+                <span class="community-rating" title="{{ movie.review_count }} community reviews">
+                    {% include 'movies/partials/star_rating.html' with rating=movie.average_rating label="Community average" %}
+                    {{ movie.average_rating|floatformat:1 }}/5
+                    <small>({{ movie.review_count }})</small>
+                </span>
+            {% else %}
+                <span class="no-rating">No community reviews yet</span>
+            {% endif %}
+        </div>
+    </div>
+</article>

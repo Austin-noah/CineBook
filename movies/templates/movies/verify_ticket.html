@@ -1,0 +1,30 @@
+{% extends 'movies/base.html' %}
+
+{% block title %}Verify Ticket | CineBook{% endblock %}
+
+{% block content %}
+<div class="container-xl page-shell">
+    <section class="verification-card">
+        <span class="eyebrow">CINEBOOK TICKET CHECK</span>
+        <h1>Reservation verified</h1>
+        <p class="verification-status">Status: Reserved · payment due at cinema</p>
+        <dl>
+            <dt>Booking reference</dt>
+            <dd>{{ booking.confirmation_token }}</dd>
+            <dt>Movie</dt>
+            <dd>{{ booking.showtime.movie.title }}</dd>
+            <dt>Theatre</dt>
+            <dd>{{ booking.showtime.screen.theatre.name }}</dd>
+            <dt>Screen</dt>
+            <dd>{{ booking.showtime.screen.name }}</dd>
+            <dt>City</dt>
+            <dd>{{ booking.showtime.screen.theatre.city }}</dd>
+            <dt>Date and time</dt>
+            <dd>{{ booking.showtime.show_date }} · {{ booking.showtime.show_time }}</dd>
+            <dt>Seats</dt>
+            <dd>{{ booking.selected_seats|join:", " }}</dd>
+        </dl>
+        <p>No customer email address or phone number is included in this verification page.</p>
+    </section>
+</div>
+{% endblock %}

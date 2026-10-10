@@ -1,0 +1,76 @@
+{% extends 'movies/base.html' %}
+
+{% block title %}Booking Confirmed | CineBook{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <section class="confirmation-card">
+        <div class="ticket-toolbar">
+            <span class="eyebrow">YOUR CINEBOOK RESERVATION</span>
+            <button type="button" class="btn btn-cine-quiet" data-print-ticket>
+                Print ticket
+            </button>
+        </div>
+        <article class="movie-ticket" id="movie-ticket">
+            <header class="ticket-heading">
+                <div>
+                    <span class="eyebrow">BOOKING CONFIRMED</span>
+                    <h1>{{ booking.showtime.movie.title }}</h1>
+                </div>
+                {% if booking.showtime.movie.poster_url %}
+                    <img class="ticket-poster"
+                         src="{{ booking.showtime.movie.poster_url }}"
+                         alt="{{ booking.showtime.movie.title }} poster"
+                         data-image-fallback>
+                    <div class="poster-placeholder ticket-poster" hidden aria-hidden="true">
+                        <span>{{ booking.showtime.movie.title|slice:":1" }}</span>
+                    </div>
+                {% else %}
+                    <div class="poster-placeholder ticket-poster" aria-hidden="true">
+                        <span>{{ booking.showtime.movie.title|slice:":1" }}</span>
+                    </div>
+                {% endif %}
+            </header>
+            <div class="ticket-details">
+                <p><strong>Booking reference</strong><span class="booking-reference">{{ booking.confirmation_token }}</span></p>
+                <p><strong>Status</strong><span>Reserved · payment due at cinema</span></p>
+                <p><strong>Theatre</strong><span>{{ booking.showtime.screen.theatre.name }}</span></p>
+                <p><strong>Address</strong><span>{{ booking.showtime.screen.theatre.address|default:"Address not provided" }}</span></p>
+                <p><strong>Screen</strong><span>{{ booking.showtime.screen.name }}</span></p>
+                <p><strong>Date &amp; time</strong><span>{{ booking.showtime.show_date }} · {{ booking.showtime.show_time }}</span></p>
+                {% if booking.showtime.language %}
+                    <p><strong>Language</strong><span>{{ booking.showtime.language }}</span></p>
+                {% endif %}
+                {% if booking.showtime.format %}
+                    <p><strong>Format</strong><span>{{ booking.showtime.format }}</span></p>
+                {% endif %}
+                <p><strong>Seats</strong><span>{{ booking.selected_seats|join:", " }}</span></p>
+                <p><strong>Tickets</strong><span>{{ booking.selected_seats|length }}</span></p>
+                {% for ticket in ticket_breakdown %}
+                    <p><strong>{{ ticket.seat }} ticket</strong><span>₹{{ ticket.price }}</span></p>
+                {% endfor %}
+                <p><strong>Customer</strong><span>{{ booking.customer_name }}</span></p>
+                <p><strong>Reserved at</strong><time datetime="{{ booking.booked_at|date:'c' }}">{{ booking.booked_at }}</time></p>
+            </div>
+            <div class="ticket-total">
+                <span>Total due at the cinema</span>
+                <strong>₹{{ booking.total_paid }}</strong>
+            </div>
+            <div class="ticket-qr">
+                <img src="{{ ticket_qr_data_uri }}"
+                     alt="Scan to verify reservation {{ booking.confirmation_token }}">
+                <span>Scan to verify this ticket</span>
+            </div>
+            <p class="ticket-payment-note">
+                Reservation confirmed. No online payment was collected.
+            </p>
+            {% if booking.confirmation_email_sent %}
+                <p class="email-status">Confirmation email sent to {{ booking.customer_email }}.</p>
+            {% endif %}
+        </article>
+        <a href="{% url 'movie_list' %}" class="btn btn-cine-primary back-to-movies">
+            Back to Movies
+        </a>
+    </section>
+</div>
+{% endblock %}

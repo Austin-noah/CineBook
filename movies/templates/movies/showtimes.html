@@ -1,0 +1,130 @@
+{% extends 'movies/base.html' %}
+
+{% block title %}Showtimes for {{ movie.title }} | CineBook{% endblock %}
+
+{% block content %}
+<div class="container-xl page-shell showtimes-page">
+    <a href="{% url 'movie_detail' movie.pk %}"
+       class="btn btn-cine-quiet mb-3">&larr; Back to {{ movie.title }}</a>
+
+    <header class="showtimes-heading">
+        <div>
+            <span class="eyebrow">CHOOSE YOUR SHOW</span>
+            <h1>{{ movie.title }}</h1>
+            <p>{{ movie.language }} · {{ movie.duration }} min · {{ movie.genre }}</p>
+            <p>Showing future sessions in <strong>{{ selected_city }}</strong>.</p>
+        </div>
+        <a href="{% url 'movie_detail' movie.pk %}#reviews"
+           class="btn btn-cine-quiet">Community reviews</a>
+    </header>
+
+    <nav class="showtime-date-strip" aria-label="Upcoming show dates">
+        <a class="date-option{% if not filter_values.date %} is-active{% endif %}"
+           href="{% url 'movie_showtimes' movie.pk %}{% if filter_values.language %}?language={{ filter_values.language|urlencode }}{% endif %}">
+            <span>All</span><strong>Dates</strong>
+        </a>
+        {% for day in available_dates %}
+            <a class="date-option{% if filter_values.date == day|date:'Y-m-d' %} is-active{% endif %}"
+               href="{% url 'movie_showtimes' movie.pk %}?date={{ day|date:'Y-m-d' }}{% if filter_values.language %}&amp;language={{ filter_values.language|urlencode }}{% endif %}">
+                <span>{{ day|date:"D" }}</span>
+                <strong>{{ day|date:"d" }}</strong>
+                <span>{{ day|date:"M" }}</span>
+            </a>
+        {% endfor %}
+    </nav>
+
+    <form class="showtime-filters" method="get">
+        {% if filter_values.date %}
+            <input type="hidden" name="date" value="{{ filter_values.date }}">
+        {% endif %}
+        <label>
+            Language
+            <select name="language" class="form-select">
+                <option value="">All languages</option>
+                {% for language in languages %}
+                    <option value="{{ language }}"{% if filter_values.language == language %} selected{% endif %}>{{ language }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Format
+            <select name="format" class="form-select">
+                <option value="">All formats</option>
+                {% for format in formats %}
+                    <option value="{{ format }}"{% if filter_values.format == format %} selected{% endif %}>{{ format }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Price range
+            <select name="price" class="form-select">
+                <option value="">Any ticket price</option>
+                <option value="under-150"{% if filter_values.price == "under-150" %} selected{% endif %}>Under ₹150</option>
+                <option value="150-250"{% if filter_values.price == "150-250" %} selected{% endif %}>₹150–₹250</option>
+                <option value="250-plus"{% if filter_values.price == "250-plus" %} selected{% endif %}>Above ₹250</option>
+            </select>
+        </label>
+        <label>
+            Preferred time
+            <select name="time" class="form-select">
+                <option value="">Any time</option>
+                <option value="morning"{% if filter_values.time == "morning" %} selected{% endif %}>Morning</option>
+                <option value="afternoon"{% if filter_values.time == "afternoon" %} selected{% endif %}>Afternoon</option>
+                <option value="evening"{% if filter_values.time == "evening" %} selected{% endif %}>Evening</option>
+            </select>
+        </label>
+        <label>
+            Sort by
+            <select name="sort" class="form-select">
+                <option value="time"{% if filter_values.sort == "time" %} selected{% endif %}>Showtime</option>
+                <option value="price"{% if filter_values.sort == "price" %} selected{% endif %}>Ticket price</option>
+            </select>
+        </label>
+        <button class="btn btn-cine-primary" type="submit">Apply filters</button>
+        <a class="btn btn-cine-quiet"
+           href="{% url 'movie_showtimes' movie.pk %}">Clear</a>
+    </form>
+
+    {% for theatre, showtimes in showtime_groups %}
+        <section class="showtime-theatre-card">
+            <header class="showtime-theatre-heading">
+                <div>
+                    <span class="eyebrow">{{ theatre.get_cinema_type_display }}</span>
+                    <h2>{{ theatre.name }}</h2>
+                    <p>{{ theatre.address|default:"Address not provided" }} · {{ theatre.city }}</p>
+                </div>
+            </header>
+            <div class="showtime-session-list">
+                {% for showtime in showtimes %}
+                    <article class="showtime-session">
+                        <div class="session-date">
+                            <strong>{{ showtime.show_date|date:"D, d M" }}</strong>
+                            <span>{{ showtime.show_time|time:"g:i A" }}</span>
+                        </div>
+                        <div class="session-screen">
+                            <strong>{{ showtime.screen.name }}</strong>
+                            <span>{{ showtime.language|default:movie.language }}{% if showtime.format %} · {{ showtime.format }}{% endif %}</span>
+                        </div>
+                        <div class="session-price">
+                            <strong>From ₹{{ showtime.lowest_ticket_price }}</strong>
+                            <span>Ground (near screen) ₹{{ showtime.ground_ticket_price|default:showtime.ticket_price }} · Middle ₹{{ showtime.middle_ticket_price|default:showtime.ticket_price }} · Upper (rear) ₹{{ showtime.upper_ticket_price|default:showtime.ticket_price }}</span>
+                        </div>
+                        <div class="session-availability">
+                            <span>{{ showtime.available_seat_count }} seats available</span>
+                            <a href="{% url 'book_seats' showtime.pk %}"
+                               class="btn btn-cine-primary">Select seats</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% empty %}
+        <div class="quiet-empty showtime-empty">
+            <h2>No future sessions found</h2>
+            <p>Try another date or clear filters. Change the cinema city from the navigation to see sessions elsewhere.</p>
+            <a href="{% url 'movie_showtimes' movie.pk %}"
+               class="btn btn-cine-primary">Clear filters</a>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

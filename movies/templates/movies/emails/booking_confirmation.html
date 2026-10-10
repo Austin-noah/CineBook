@@ -1,0 +1,21 @@
+<div style="background:#10141c;color:#f5f6f8;font-family:Arial,sans-serif;padding:24px">
+    <h1 style="color:#ff6474">CineBook</h1>
+    <h2>Your booking is reserved</h2>
+    <p>Hello {{ booking.customer_name }},</p>
+    <p><strong>Booking reference:</strong> {{ booking.confirmation_token }}</p>
+    <p><strong>Movie:</strong> {{ showtime.movie.title }}</p>
+    <p><strong>Theatre:</strong> {{ theatre.name }}, {{ theatre.address }} ({{ theatre.city }})</p>
+    <p><strong>Screen:</strong> {{ showtime.screen.name }}</p>
+    <p><strong>Showtime:</strong> {{ showtime.show_date }} at {{ showtime.show_time }}</p>
+    <p><strong>Seats:</strong> {{ booking.selected_seats|join:", " }}</p>
+    <p><strong>Tickets:</strong>
+        {% for ticket in ticket_breakdown %}
+            {{ ticket.seat }} (₹{{ ticket.price }}){% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    </p>
+    <p><strong>Total due at the cinema:</strong> ₹{{ booking.total_paid }}</p>
+    <p>No online payment was collected.</p>
+    <p><a href="{{ verification_url }}" style="color:#ff9aa4">Verify this ticket</a></p>
+    <p><img src="cid:cinebook-ticket-qr" width="180" height="180"
+            alt="Secure ticket verification QR code"></p>
+</div>

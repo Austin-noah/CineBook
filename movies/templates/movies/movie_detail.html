@@ -1,0 +1,264 @@
+{% extends 'movies/base.html' %}
+
+{% block title %}{{ movie.title }} | CineBook{% endblock %}
+
+{% block content %}
+<div class="container-xl page-shell">
+    <a href="{% url 'movie_list' %}" class="btn btn-cine-quiet mb-3">
+        &larr; Browse movies
+    </a>
+
+    <section class="detail-hero {% if not movie.backdrop_url %}detail-hero-fallback{% endif %}">
+        {% if movie.backdrop_url %}
+            <img class="detail-backdrop"
+                 src="{{ movie.backdrop_url }}"
+                 alt=""
+                 data-image-fallback>
+        {% endif %}
+        <div class="detail-layout">
+            <div class="detail-poster">
+                {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}"
+                         alt="{{ movie.title }} poster"
+                         data-image-fallback>
+                    <div class="poster-placeholder" hidden aria-hidden="true">
+                        <span>{{ movie.title|slice:":1" }}</span>
+                        <small>{{ movie.title }}</small>
+                    </div>
+                {% else %}
+                    <div class="poster-placeholder" aria-hidden="true">
+                        <span>{{ movie.title|slice:":1" }}</span>
+                        <small>{{ movie.title }}</small>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="detail-copy">
+                <span class="eyebrow">{{ movie.get_status_display }}</span>
+                <h1>{{ movie.title }}</h1>
+                <div class="detail-rating">
+                    <span aria-hidden="true">★</span>
+                    {% if movie.average_rating %}
+                        <strong>{{ movie.average_rating|floatformat:1 }}/5</strong>
+                        <span>{{ movie.review_count }} community review{{ movie.review_count|pluralize }}</span>
+                    {% else %}
+                        <strong>Not rated yet</strong>
+                        <span>Be the first to review</span>
+                    {% endif %}
+                    <a href="#write-review" class="detail-rate-link">Rate now</a>
+                </div>
+                <div class="detail-meta">
+                    <span>{{ movie.genre }}</span>
+                    <span>{{ movie.duration }} min</span>
+                    {% if movie.release_date %}
+                        <span>Released {{ movie.release_date }}</span>
+                    {% endif %}
+                    {% if movie.catalogue_rating is not None %}
+                        <span>
+                            External {{ movie.catalogue_rating }}/10
+                            {% if movie.catalogue_rating_source %}
+                                · {{ movie.catalogue_rating_source }}
+                            {% endif %}
+                        </span>
+                    {% endif %}
+                </div>
+                <p>{{ movie.description }}</p>
+                <div class="detail-actions">
+                    <a href="{% url 'movie_showtimes' movie.pk %}"
+                       class="btn btn-cine-primary detail-book-button">Book tickets</a>
+                    <button type="button" class="btn btn-cine-quiet"
+                            data-share-page>Share</button>
+                    <span class="share-status" aria-live="polite"></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content-section movie-availability" aria-labelledby="availability-title">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">CONFIGURED FOR {{ selected_city|upper }}</span>
+                <h2 id="availability-title">Languages &amp; formats</h2>
+            </div>
+        </div>
+        {% if available_languages or available_formats %}
+            <div class="availability-groups">
+                {% if available_languages %}
+                    <div>
+                        <h3>Available languages</h3>
+                        <div class="availability-options">
+                            {% for language in available_languages %}
+                                <a href="{% url 'movie_showtimes' movie.pk %}?city={{ selected_city|urlencode }}&amp;language={{ language|urlencode }}">
+                                    {{ language }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                {% if available_formats %}
+                    <div>
+                        <h3>Screening formats</h3>
+                        <div class="availability-options">
+                            {% for format in available_formats %}
+                                <a href="{% url 'movie_showtimes' movie.pk %}?city={{ selected_city|urlencode }}&amp;format={{ format|urlencode }}">
+                                    {{ format }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                {% if subtitle_languages %}
+                    <div>
+                        <h3>Configured subtitles</h3>
+                        <p>{{ subtitle_languages|join:", " }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <p>No upcoming language or format options are scheduled in {{ selected_city }} yet.</p>
+        {% endif %}
+    </section>
+
+    <section class="content-section cast-crew-section" aria-labelledby="cast-crew-title">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">PEOPLE BEHIND THE FILM</span>
+                <h2 id="cast-crew-title">Cast &amp; Crew</h2>
+            </div>
+        </div>
+        {% if cast_and_crew %}
+            <div class="cast-crew-list">
+                {% for person in cast_and_crew %}
+                    <article class="cast-crew-person">
+                        {% if person.role == "main_cast" or person.role == "supporting_cast" %}
+                            <div class="cast-person-image">
+                                {% if person.profile_image_url %}
+                                    <img src="{{ person.profile_image_url }}"
+                                         alt="{{ person.name }}"
+                                         loading="lazy"
+                                         data-image-fallback>
+                                    <div class="poster-placeholder" hidden aria-hidden="true">
+                                        <span>{{ person.name|slice:":1" }}</span>
+                                    </div>
+                                {% else %}
+                                    <div class="poster-placeholder" aria-hidden="true">
+                                        <span>{{ person.name|slice:":1" }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <strong>{{ person.name }}</strong>
+                            <span>{{ person.get_role_display }}</span>
+                            {% if person.character_name %}
+                                <small>as {{ person.character_name }}</small>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>Cast details not available yet.</p>
+        {% endif %}
+    </section>
+
+    <section class="content-section" id="showtimes">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">IN CINEMAS</span>
+                <h2>Choose a showtime in {{ selected_city }}</h2>
+            </div>
+            <a href="{% url 'movie_showtimes' movie.pk %}"
+               class="btn btn-cine-primary">View all showtimes</a>
+        </div>
+        <div class="detail-showtime-list">
+            {% for showtime in upcoming_showtimes %}
+                <article class="detail-showtime-card">
+                    <div>
+                        <strong>{{ showtime.show_date|date:"D, d M" }} · {{ showtime.show_time|time:"g:i A" }}</strong>
+                        <span>{{ showtime.screen.theatre.name }} · {{ showtime.screen.name }}</span>
+                        <small>
+                            {{ showtime.language|default:movie.language }}{% if showtime.format %} · {{ showtime.format }}{% endif %}
+                            · {{ showtime.available_seat_count }} seats available
+                            · From ₹{{ showtime.lowest_ticket_price }}
+                        </small>
+                    </div>
+                    <a href="{% url 'book_seats' showtime.pk %}"
+                       class="btn btn-cine-primary">Book tickets</a>
+                </article>
+            {% empty %}
+                <p>No upcoming showtimes are scheduled in {{ selected_city }} yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="content-section" id="reviews">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">FROM THE CINEBOOK COMMUNITY</span>
+                <h2>Top reviews from the community</h2>
+            </div>
+            {% if movie.average_rating %}
+                <span class="result-count">
+                    {% include 'movies/partials/star_rating.html' with rating=movie.average_rating label="Community average" %}
+                    {{ movie.average_rating|floatformat:1 }}/5
+                </span>
+            {% else %}
+                <span class="result-count">No community reviews yet</span>
+            {% endif %}
+        </div>
+
+        <div class="review-carousel mb-4" data-review-carousel>
+            {% for review in reviews %}
+                <article class="review-card">
+                    <div class="review-card-heading">
+                        <strong>{{ review.reviewer_name }}</strong>
+                        <span class="review-rating">
+                            {% include 'movies/partials/star_rating.html' with rating=review.rating label="Viewer rating" %}
+                            {{ review.rating }}/5
+                        </span>
+                    </div>
+                    <p class="review-copy" data-review-copy>{{ review.comment }}</p>
+                    <button type="button" class="review-read-more"
+                            data-read-more hidden>Read more</button>
+                    <time class="review-date" datetime="{{ review.created_at|date:'c' }}">
+                        {{ review.created_at|date:"d M Y" }}
+                    </time>
+                </article>
+            {% empty %}
+                <div class="quiet-empty">
+                    No community reviews yet. Be the first to share your thoughts.
+                </div>
+            {% endfor %}
+        </div>
+
+        <h3 class="mb-3" id="write-review">Write a review</h3>
+        <form method="post" class="review-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="mb-3">
+                {{ form.reviewer_name.label_tag }}
+                {{ form.reviewer_name }}
+                {{ form.reviewer_name.errors }}
+            </div>
+            <fieldset class="rating-field mb-3">
+                <legend>Rate this movie</legend>
+                {{ form.rating }}
+                {% for error in form.rating.errors %}
+                    <p class="field-error" role="alert">{{ error }}</p>
+                {% endfor %}
+            </fieldset>
+            <div class="mb-3">
+                {{ form.comment.label_tag }}
+                {{ form.comment }}
+                {{ form.comment.errors }}
+            </div>
+            <button type="submit" class="btn btn-cine-primary">
+                Submit review
+            </button>
+        </form>
+    </section>
+</div>
+{% endblock %}

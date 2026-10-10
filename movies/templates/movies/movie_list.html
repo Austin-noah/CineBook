@@ -1,0 +1,222 @@
+{% extends 'movies/base.html' %}
+{% load static %}
+
+{% block title %}Movies | CineBook{% endblock %}
+
+{% block content %}
+<div class="container-xl page-shell">
+    <section class="top-movies-section" aria-labelledby="top-movies-title">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">CINEBOOK PICKS</span>
+                <h2 id="top-movies-title">Top 5 Movies</h2>
+                <p>Top-rated and featured films in the catalogue.</p>
+            </div>
+        </div>
+        <div class="top-movies-carousel" data-movie-carousel>
+            {% for movie in top_movies %}
+                <article class="top-movie-card">
+                    <a class="top-movie-poster"
+                       href="{% url 'movie_detail' movie.pk %}?city={{ selected_city|urlencode }}">
+                        {% if movie.poster_url %}
+                            <img src="{{ movie.poster_url }}"
+                                 alt="{{ movie.title }} poster"
+                                 loading="lazy"
+                                 data-image-fallback>
+                            <div class="poster-placeholder" hidden aria-hidden="true">
+                                <span>{{ movie.title|slice:":1" }}</span>
+                                <small>{{ movie.title }}</small>
+                            </div>
+                        {% else %}
+                            <div class="poster-placeholder" aria-hidden="true">
+                                <span>{{ movie.title|slice:":1" }}</span>
+                                <small>{{ movie.title }}</small>
+                            </div>
+                        {% endif %}
+                    </a>
+                    <div class="top-movie-copy">
+                        <h3>
+                            <a href="{% url 'movie_detail' movie.pk %}?city={{ selected_city|urlencode }}">
+                                {{ movie.title }}
+                            </a>
+                        </h3>
+                        <p>{{ movie.genre }} · {{ movie.language }}</p>
+                        <div class="top-movie-rating">
+                            {% if movie.average_rating %}
+                                ★ {{ movie.average_rating|floatformat:1 }}/5
+                                <small>community</small>
+                            {% elif movie.catalogue_rating is not None %}
+                                {{ movie.catalogue_rating }}/10
+                                <small>
+                                    {{ movie.catalogue_rating_source|default:"catalogue" }}
+                                </small>
+                            {% else %}
+                                <span class="no-rating">No community reviews yet</span>
+                            {% endif %}
+                        </div>
+                        <a class="btn btn-cine-primary btn-sm"
+                           href="{% url 'movie_showtimes' movie.pk %}?city={{ selected_city|urlencode }}">
+                            Book Tickets
+                        </a>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="quiet-empty">Add movies in Admin to build your Top 5.</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="catalogue-section" id="catalogue">
+        <form method="get" class="filter-panel" action="{% url 'movie_list' %}">
+            <input type="hidden" name="city" value="{{ selected_city }}">
+            <div class="filter-search">
+                <label for="{{ filter_form.q.id_for_label }}">Search</label>
+                {{ filter_form.q }}
+            </div>
+            <div>
+                <label for="{{ filter_form.genre.id_for_label }}">Genre</label>
+                {{ filter_form.genre }}
+            </div>
+            <div>
+                <label for="{{ filter_form.language.id_for_label }}">Language</label>
+                {{ filter_form.language }}
+            </div>
+            <div>
+                <label for="{{ filter_form.min_rating.id_for_label }}">Catalogue rating</label>
+                {{ filter_form.min_rating }}
+            </div>
+            <div>
+                <label for="{{ filter_form.sort.id_for_label }}">Sort by</label>
+                {{ filter_form.sort }}
+            </div>
+            <div class="filter-buttons">
+                <button class="btn btn-cine-primary" type="submit">Find movies</button>
+                <a class="btn btn-cine-quiet"
+                   href="{% url 'movie_list' %}?city={{ selected_city|urlencode }}">
+                    Clear
+                </a>
+            </div>
+        </form>
+
+        {% if has_filters %}
+            <div class="section-heading compact-heading">
+                <h2>Search results</h2>
+            </div>
+            <div class="movie-grid">
+                {% for movie in movies %}
+                    {% include 'movies/partials/movie_card.html' with movie=movie selected_city=selected_city %}
+                {% empty %}
+                    <div class="empty-state">
+                        <span class="empty-icon" aria-hidden="true">⌕</span>
+                        <h3>No matching films</h3>
+                        <p>Try a different title, genre, language or rating.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <section class="movie-section" id="all-movies">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">THE CINEBOOK SHELF</span>
+                        <h2>Browse the catalogue</h2>
+                    </div>
+                </div>
+                <div class="movie-grid">
+                    {% for movie in movies %}
+                        {% include 'movies/partials/movie_card.html' with movie=movie selected_city=selected_city %}
+                    {% empty %}
+                        <div class="empty-state">
+                            <h3>More films are on the way</h3>
+                            <p>Check back soon for titles in the catalogue.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="movie-section" id="now-showing">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">BOOK A SEAT FOR TODAY'S LINEUP</span>
+                        <h2>Now showing</h2>
+                    </div>
+                </div>
+                <div class="movie-grid movie-grid-short">
+                    {% for movie in now_showing %}
+                        {% include 'movies/partials/movie_card.html' with movie=movie selected_city=selected_city %}
+                    {% empty %}
+                        <div class="quiet-empty">
+                            No movies have been marked as now showing yet.
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="movie-section" id="trending">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">BOOKED BY MOVIE FANS</span>
+                        <h2>Trending</h2>
+                    </div>
+                </div>
+                <div class="movie-grid movie-grid-short">
+                    {% for movie in trending_movies %}
+                        {% include 'movies/partials/movie_card.html' with movie=movie selected_city=selected_city %}
+                    {% empty %}
+                        <div class="quiet-empty">
+                            Trending picks will appear as viewers book tickets.
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="movie-section" id="recently-added">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">FRESHLY ADDED</span>
+                        <h2>Recently added</h2>
+                    </div>
+                </div>
+                <div class="movie-grid movie-grid-short">
+                    {% for movie in recent_movies %}
+                        {% include 'movies/partials/movie_card.html' with movie=movie selected_city=selected_city %}
+                    {% empty %}
+                        <div class="quiet-empty">The catalogue is ready for its first film.</div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+    </section>
+    <section class="community-home-section" id="reviews">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">REAL VIEWER VOICES</span>
+                <h2>Community reviews</h2>
+            </div>
+        </div>
+        <div class="review-carousel">
+            {% for review in recent_reviews %}
+                <article class="review-card">
+                    <div class="review-card-heading">
+                        <strong>{{ review.movie.title }}</strong>
+                        <span class="review-rating">★ {{ review.rating }}/5</span>
+                    </div>
+                    <p class="review-copy">{{ review.comment }}</p>
+                    <span class="review-date">{{ review.reviewer_name }} · {{ review.created_at|date:"d M Y" }}</span>
+                    <a class="community-review-link"
+                       href="{% url 'movie_detail' review.movie_id %}#reviews">View movie &amp; reviews</a>
+                </article>
+            {% empty %}
+                <div class="quiet-empty">
+                    No reviews have been submitted yet. Open a movie page to share your first rating.
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="offers-empty-state" id="offers">
+        <span class="eyebrow">CINEBOOK OFFERS</span>
+        <h2>No active offers right now</h2>
+        <p>Promotions will appear here when configured.</p>
+    </section>
+</div>
+{% endblock %}

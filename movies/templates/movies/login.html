@@ -1,0 +1,37 @@
+{% extends 'movies/base.html' %}
+
+{% block title %}Log in | CineBook{% endblock %}
+
+{% block content %}
+<div class="container-xl page-shell">
+    <section class="login-card" aria-labelledby="login-title">
+        <span class="eyebrow">WELCOME BACK</span>
+        <h1 id="login-title">Log in to CineBook</h1>
+        <p>Use your username or email address and password.</p>
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+            <div class="mb-3">
+                {{ form.username.label_tag }}
+                {{ form.username }}
+                {{ form.username.errors }}
+            </div>
+            <div class="mb-3">
+                {{ form.password.label_tag }}
+                {{ form.password }}
+                {{ form.password.errors }}
+            </div>
+            <button type="submit" class="btn btn-cine-primary w-100">
+                Log in
+            </button>
+        </form>
+    </section>
+</div>
+{% endblock %}
