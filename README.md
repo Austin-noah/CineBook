@@ -183,3 +183,4 @@ reviews, reservations, admin data) can be lost when the service is replaced or
 restarted. This deployment configuration is suitable for a demonstration,
 not durable production bookings. Do not accept real payments or rely on this
 SQLite instance for business-critical data.
+# movie-booking
