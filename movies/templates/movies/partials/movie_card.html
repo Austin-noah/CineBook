@@ -18,7 +18,9 @@
                 <small>{{ movie.title }}</small>
             </div>
         {% endif %}
-        <span class="poster-status">{{ movie.get_status_display }}</span>
+        <span class="poster-status {% if movie.status == 'now_showing' %}poster-status-showing{% elif movie.status == 'upcoming' %}poster-status-upcoming{% endif %}">
+            {{ movie.get_status_display }}
+        </span>
     </a>
     <div class="movie-card-copy">
         <div class="card-title-row">
@@ -42,8 +44,18 @@
                     <small>({{ movie.review_count }})</small>
                 </span>
             {% else %}
-                <span class="no-rating">No community reviews yet</span>
+                <span class="no-rating">No reviews yet</span>
             {% endif %}
+        </div>
+        <div class="card-actions">
+            <a class="btn btn-cine-primary btn-sm card-book-btn"
+               href="{% url 'movie_showtimes' movie.pk %}?city={{ selected_city|urlencode }}">
+                Book Tickets
+            </a>
+            <a class="btn btn-cine-quiet btn-sm"
+               href="{% url 'movie_detail' movie.pk %}?city={{ selected_city|urlencode }}">
+                Details
+            </a>
         </div>
     </div>
 </article>

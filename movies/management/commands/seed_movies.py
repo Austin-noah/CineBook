@@ -27,6 +27,8 @@ SAMPLE_MOVIES = (
         "duration": 169,
         "release_date": date(2014, 11, 7),
         "language": "English",
+        "poster_url": "/static/movies/images/posters/interstellar.png",
+        "status": Movie.Status.NOW_SHOWING,
         "description": (
             "A team of explorers travels beyond Earth to search for a "
             "possible new home for humanity."
@@ -39,6 +41,8 @@ SAMPLE_MOVIES = (
         "duration": 148,
         "release_date": date(2010, 7, 16),
         "language": "English",
+        "poster_url": "/static/movies/images/posters/inception.png",
+        "status": Movie.Status.NOW_SHOWING,
         "description": (
             "A specialist who enters dreams is offered a chance to return "
             "home by undertaking an unusually difficult mission."
@@ -50,6 +54,8 @@ SAMPLE_MOVIES = (
         "duration": 116,
         "release_date": date(2016, 11, 11),
         "language": "English",
+        "poster_url": "/static/movies/images/posters/Arrival.png",
+        "status": Movie.Status.CATALOGUE,
         "description": (
             "A linguist works to understand the language of visitors who "
             "have arrived at sites around the world."
@@ -62,6 +68,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2024, 3, 1),
         "language": "English",
         "poster_url": "/static/movies/images/posters/dune-part-two.png",
+        "status": Movie.Status.NOW_SHOWING,
         "description": (
             "Paul Atreides joins the Fremen on Arrakis as he confronts the "
             "future of his family and the planet."
@@ -74,6 +81,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2022, 3, 25),
         "language": "Telugu",
         "poster_url": "/static/movies/images/posters/rrr.png",
+        "status": Movie.Status.NOW_SHOWING,
         "description": (
             "Two courageous men from different worlds form an unexpected "
             "friendship in a fictional tale set in colonial India."
@@ -85,6 +93,8 @@ SAMPLE_MOVIES = (
         "duration": 159,
         "release_date": date(2015, 7, 10),
         "language": "Telugu",
+        "poster_url": "/static/movies/images/posters/Baahubali_The_Beginning.png",
+        "status": Movie.Status.CATALOGUE,
         "description": (
             "A young man discovers a connection to a kingdom and becomes "
             "involved in its struggle for power."
@@ -96,6 +106,8 @@ SAMPLE_MOVIES = (
         "duration": 167,
         "release_date": date(2017, 4, 28),
         "language": "Telugu",
+        "poster_url": "/static/movies/images/posters/Baahubali 2_ The Conclusion.png",
+        "status": Movie.Status.NOW_SHOWING,
         "description": (
             "The story of the Mahishmati kingdom continues as its past "
             "reveals the events behind a lasting question."
@@ -108,6 +120,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2022, 8, 5),
         "language": "Telugu",
         "poster_url": "/static/movies/images/posters/sita-ramam.png",
+        "status": Movie.Status.NOW_SHOWING,
         "description": (
             "A letter from a soldier begins a search that connects people "
             "across time."
@@ -120,6 +133,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2021, 12, 17),
         "language": "Telugu",
         "poster_url": "/static/movies/images/posters/pushpa-the-rise.png",
+        "status": Movie.Status.NOW_SHOWING,
         "description": (
             "A determined worker rises through the ranks of a red-sanders "
             "smuggling network."
@@ -132,6 +146,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2019, 4, 19),
         "language": "Telugu",
         "poster_url": "/static/movies/images/posters/jersey.png",
+        "status": Movie.Status.CATALOGUE,
         "description": (
             "A former cricketer considers returning to the sport to fulfil "
             "a promise to his son."
@@ -144,6 +159,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2012, 7, 6),
         "language": "Telugu",
         "poster_url": "/static/movies/images/posters/eega.png",
+        "status": Movie.Status.CATALOGUE,
         "description": (
             "A murdered man returns in an unexpected form to protect the "
             "people he loves."
@@ -155,6 +171,8 @@ SAMPLE_MOVIES = (
         "duration": 158,
         "release_date": date(2024, 1, 12),
         "language": "Telugu",
+        "poster_url": "/static/movies/images/posters/hanu-man.png",
+        "status": Movie.Status.NOW_SHOWING,
         "description": (
             "A young man in a small village discovers an extraordinary "
             "power and takes on a new responsibility."
@@ -167,6 +185,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2024, 9, 27),
         "language": "Telugu",
         "poster_url": "/static/movies/images/posters/devara-part-1.png",
+        "status": Movie.Status.NOW_SHOWING,
         "description": (
             "A coastal community faces conflict as a son confronts the "
             "legacy of his father."
@@ -179,6 +198,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2016, 12, 23),
         "language": "Hindi",
         "poster_url": "/static/movies/images/posters/dangal.png",
+        "status": Movie.Status.CATALOGUE,
         "description": (
             "A former wrestler trains his daughters to compete in a sport "
             "where they face formidable expectations."
@@ -191,6 +211,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2009, 12, 25),
         "language": "Hindi",
         "poster_url": "/static/movies/images/posters/3-idiots.png",
+        "status": Movie.Status.CATALOGUE,
         "description": (
             "Three engineering students question convention and search for "
             "a friend years after graduation."
@@ -202,6 +223,8 @@ SAMPLE_MOVIES = (
         "duration": 153,
         "release_date": date(2019, 2, 14),
         "language": "Hindi",
+        "poster_url": "/static/movies/images/posters/gully-boy.png",
+        "status": Movie.Status.CATALOGUE,
         "description": (
             "A young man from Mumbai finds his voice through hip-hop and "
             "works toward a life of his own."
@@ -213,7 +236,8 @@ SAMPLE_MOVIES = (
         "duration": 139,
         "release_date": date(2018, 10, 5),
         "language": "Hindi",
-        "poster_url": "/static/movies/images/posters/Andhadhun.png",
+        "poster_url": "/static/movies/images/posters/andhadhun.png",
+        "status": Movie.Status.CATALOGUE,
         "description": (
             "A pianist becomes caught in a series of complications after "
             "witnessing a crime."
@@ -226,6 +250,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2022, 6, 3),
         "language": "Tamil",
         "poster_url": "/static/movies/images/posters/vikram.png",
+        "status": Movie.Status.NOW_SHOWING,
         "description": (
             "A special investigation into a string of murders uncovers "
             "connections to a powerful criminal network."
@@ -237,6 +262,8 @@ SAMPLE_MOVIES = (
         "duration": 169,
         "release_date": date(2023, 8, 10),
         "language": "Tamil",
+        "poster_url": "/static/movies/images/posters/jailer.png",
+        "status": Movie.Status.NOW_SHOWING,
         "description": (
             "A retired jailer is drawn into a dangerous mission to protect "
             "his family."
@@ -249,6 +276,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2019, 10, 25),
         "language": "Tamil",
         "poster_url": "/static/movies/images/posters/kaithi.png",
+        "status": Movie.Status.CATALOGUE,
         "description": (
             "A prisoner on the night of his release helps police officers "
             "in a race against time."
@@ -261,6 +289,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2022, 9, 30),
         "language": "Kannada",
         "poster_url": "/static/movies/images/posters/kantara.png",
+        "status": Movie.Status.NOW_SHOWING,
         "description": (
             "A forest community's traditions and land come into conflict "
             "with official authority."
@@ -273,6 +302,7 @@ SAMPLE_MOVIES = (
         "release_date": date(2001, 7, 20),
         "language": "Japanese",
         "poster_url": "/static/movies/images/posters/spirited-away.png",
+        "status": Movie.Status.UPCOMING,
         "description": (
             "A young girl enters a mysterious spirit world and must find "
             "her way home."
@@ -294,26 +324,37 @@ class Command(BaseCommand):
         Movie.objects.filter(title__in=REMOVED_MOVIE_TITLES).delete()
 
         for movie_data in SAMPLE_MOVIES:
+            target_status = movie_data.get("status", Movie.Status.CATALOGUE)
             movie, created = Movie.objects.get_or_create(
                 title=movie_data["title"],
                 defaults={
                     **movie_data,
-                    "status": Movie.Status.CATALOGUE,
+                    "status": target_status,
                     "backdrop_url": "",
                     "catalogue_rating": None,
                 },
             )
+            update_fields = []
             poster_url = movie_data.get("poster_url", "")
-            if not created and poster_url and movie.poster_url != poster_url:
+            if poster_url and movie.poster_url != poster_url:
                 movie.poster_url = poster_url
-                movie.save(update_fields=("poster_url",))
+                update_fields.append("poster_url")
+            if target_status and movie.status != target_status:
+                movie.status = target_status
+                update_fields.append("status")
+            if movie_data.get("is_featured") and not movie.is_featured:
+                movie.is_featured = True
+                update_fields.append("is_featured")
+            if update_fields:
+                movie.save(update_fields=update_fields)
+
             created_count += int(created)
             existing_count += int(not created)
 
         movies = list(Movie.objects.order_by("pk"))
         today = timezone.localdate()
         schedule_days = max(15, (len(movies) + 1) // 2)
-        first_show_date = today + timedelta(days=1)
+        first_show_date = today
         show_slots = (
             time(10, 0),
             time(13, 30),

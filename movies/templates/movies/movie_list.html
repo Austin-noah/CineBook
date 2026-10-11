@@ -1,10 +1,11 @@
 {% extends 'movies/base.html' %}
 {% load static %}
 
-{% block title %}Movies | CineBook{% endblock %}
+{% block title %}CineBook — Movie Ticket Booking & Community Reviews{% endblock %}
 
 {% block content %}
 <div class="container-xl page-shell">
+    {% if not has_filters %}
     <section class="top-movies-section" aria-labelledby="top-movies-title">
         <div class="section-heading">
             <div>
@@ -51,7 +52,7 @@
                                     {{ movie.catalogue_rating_source|default:"catalogue" }}
                                 </small>
                             {% else %}
-                                <span class="no-rating">No community reviews yet</span>
+                                <span class="no-rating">No reviews yet</span>
                             {% endif %}
                         </div>
                         <a class="btn btn-cine-primary btn-sm"
@@ -65,6 +66,7 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 
     <section class="catalogue-section" id="catalogue">
         <form method="get" class="filter-panel" action="{% url 'movie_list' %}">
@@ -114,6 +116,47 @@
                 {% endfor %}
             </div>
         {% else %}
+            {% if now_showing %}
+            <section class="movie-section" id="now-showing">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">BOOK A SEAT FOR TODAY'S LINEUP</span>
+                        <h2>Now showing in {{ selected_city }}</h2>
+                    </div>
+                    <a href="{% url 'movie_list' %}?city={{ selected_city|urlencode }}" class="btn btn-cine-quiet btn-sm">
+                        View all
+                    </a>
+                </div>
+                <div class="movie-grid movie-grid-short">
+                    {% for movie in now_showing %}
+                        {% include 'movies/partials/movie_card.html' with movie=movie selected_city=selected_city %}
+                    {% empty %}
+                        <div class="quiet-empty">
+                            No movies are currently showing in {{ selected_city }}.
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            {% if upcoming_movies %}
+            <section class="movie-section" id="upcoming">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">COMING SOON</span>
+                        <h2>Upcoming releases</h2>
+                    </div>
+                </div>
+                <div class="movie-grid movie-grid-short">
+                    {% for movie in upcoming_movies %}
+                        {% include 'movies/partials/movie_card.html' with movie=movie selected_city=selected_city %}
+                    {% empty %}
+                        <div class="quiet-empty">No upcoming releases scheduled yet.</div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
             <section class="movie-section" id="all-movies">
                 <div class="section-heading">
                     <div>
@@ -133,24 +176,7 @@
                 </div>
             </section>
 
-            <section class="movie-section" id="now-showing">
-                <div class="section-heading">
-                    <div>
-                        <span class="eyebrow">BOOK A SEAT FOR TODAY'S LINEUP</span>
-                        <h2>Now showing</h2>
-                    </div>
-                </div>
-                <div class="movie-grid movie-grid-short">
-                    {% for movie in now_showing %}
-                        {% include 'movies/partials/movie_card.html' with movie=movie selected_city=selected_city %}
-                    {% empty %}
-                        <div class="quiet-empty">
-                            No movies have been marked as now showing yet.
-                        </div>
-                    {% endfor %}
-                </div>
-            </section>
-
+            {% if trending_movies %}
             <section class="movie-section" id="trending">
                 <div class="section-heading">
                     <div>
@@ -168,24 +194,10 @@
                     {% endfor %}
                 </div>
             </section>
-
-            <section class="movie-section" id="recently-added">
-                <div class="section-heading">
-                    <div>
-                        <span class="eyebrow">FRESHLY ADDED</span>
-                        <h2>Recently added</h2>
-                    </div>
-                </div>
-                <div class="movie-grid movie-grid-short">
-                    {% for movie in recent_movies %}
-                        {% include 'movies/partials/movie_card.html' with movie=movie selected_city=selected_city %}
-                    {% empty %}
-                        <div class="quiet-empty">The catalogue is ready for its first film.</div>
-                    {% endfor %}
-                </div>
-            </section>
+            {% endif %}
         {% endif %}
     </section>
+
     <section class="community-home-section" id="reviews">
         <div class="section-heading">
             <div>
