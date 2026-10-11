@@ -507,6 +507,12 @@ class MoviePageTests(TestCase):
             rating=5,
             comment="Preserve this review.",
         )
+        User = get_user_model()
+        original_user = User.objects.create_user(
+            username="existing_admin",
+            email="admin@example.com",
+            password="securepassword123",
+        )
         output = StringIO()
 
         call_command("seed_movies", stdout=output)
@@ -607,6 +613,7 @@ class MoviePageTests(TestCase):
         self.assertEqual(SeatBooking.objects.get(), original_booking)
         self.assertEqual(SeatReservation.objects.get(), original_reservation)
         self.assertEqual(MovieReview.objects.get(), original_review)
+        self.assertEqual(User.objects.get(pk=original_user.pk), original_user)
 
     def test_theatre_and_screen_are_registered_in_admin(self):
         self.assertTrue(admin.site.is_registered(Theatre))

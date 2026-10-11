@@ -159,7 +159,8 @@ make external API calls during the test suite.
 ## Render preparation
 
 The included `render.yaml` installs requirements, collects static assets,
-applies migrations, and starts `config.wsgi:application` with Gunicorn. Set
+applies migrations, seeds demonstration movies, venues and showtimes via
+`seed_movies`, and starts `config.wsgi:application` with Gunicorn. Set
 `DJANGO_DEBUG=False`, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, and
 `DJANGO_CSRF_TRUSTED_ORIGINS` in the Render environment. The manifest creates a
 secret and supplies the expected CineBook hostname; update the hostname values
