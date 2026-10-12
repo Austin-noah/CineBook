@@ -5,7 +5,10 @@ import socket
 from datetime import date
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import authenticate, get_user_model, login
+from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.db.models import (
     Avg,
@@ -13,16 +16,25 @@ from django.db.models import (
     Count,
     IntegerField,
     Q,
+    Sum,
     Value,
     When,
 )
 from django.db.models.functions import Coalesce, Least
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .cities import SUPPORTED_CITIES, select_city
-from .forms import MovieFilterForm, MovieReviewForm, SeatBookingForm
+from .forms import (
+    AdminLoginForm,
+    MovieFilterForm,
+    MovieReviewForm,
+    SeatBookingForm,
+    UserRegistrationForm,
+)
 from .models import (
     Movie,
     MovieReview,
@@ -84,10 +96,13 @@ def movie_list(request):
     top_movies = list(
         movie_query.order_by(
             Case(
-                When(is_featured=True, then=Value(0)),
-                default=Value(1),
+                When(title__icontains="Salaar", then=Value(0)),
+                When(is_recommended=True, then=Value(1)),
+                When(is_featured=True, then=Value(2)),
+                default=Value(3),
                 output_field=IntegerField(),
             ),
+            "-ranking",
             Case(
                 When(poster_url__gt="", then=Value(0)),
                 default=Value(1),
@@ -100,7 +115,9 @@ def movie_list(request):
         )[:5]
     )
     featured_movie = (
-        all_movies.filter(is_featured=True).first()
+        all_movies.filter(title__icontains="Salaar").first()
+        or all_movies.filter(is_recommended=True).order_by("-ranking", "title").first()
+        or all_movies.filter(is_featured=True).first()
         or all_movies.filter(
             status=Movie.Status.NOW_SHOWING,
             upcoming_showtime_count__gt=0,
@@ -109,6 +126,22 @@ def movie_list(request):
         .first()
         or all_movies.first()
     )
+    recommended_movies = list(
+        movie_query.filter(
+            Q(is_recommended=True) | Q(title__icontains="Salaar")
+        ).order_by(
+            Case(
+                When(title__icontains="Salaar", then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            ),
+            "-ranking",
+            "title",
+        )[:6]
+    )
+    if not recommended_movies:
+        recommended_movies = top_movies
+
     genres = Movie.objects.order_by("genre").values_list(
         "genre", flat=True
     ).distinct()
@@ -134,9 +167,11 @@ def movie_list(request):
                 Q(title__icontains=query)
                 | Q(genre__icontains=query)
                 | Q(language__icontains=query)
-            )
+                | Q(cast_and_crew__name__icontains=query)
+                | Q(cast_and_crew__character_name__icontains=query)
+            ).distinct()
         if genre:
-            movies = movies.filter(genre=genre)
+            movies = movies.filter(genre__icontains=genre)
         if language:
             movies = movies.filter(language=language)
         if min_rating:
@@ -162,6 +197,7 @@ def movie_list(request):
             "filter_form": form,
             "featured_movie": featured_movie,
             "top_movies": top_movies,
+            "recommended_movies": recommended_movies,
             "now_showing": movie_list.filter(
                 status=Movie.Status.NOW_SHOWING,
                 upcoming_showtime_count__gt=0,
@@ -469,7 +505,13 @@ def book_seats(request, showtime_id):
         )
 
     if request.method != "POST":
-        return render_booking(SeatBookingForm())
+        initial_data = {}
+        if request.user.is_authenticated:
+            full_name = request.user.get_full_name().strip()
+            initial_data["customer_name"] = full_name if full_name else request.user.username
+            if request.user.email:
+                initial_data["customer_email"] = request.user.email
+        return render_booking(SeatBookingForm(initial=initial_data))
 
     form = SeatBookingForm(request.POST)
     selected_seats = request.POST.getlist("selected_seats")
@@ -528,6 +570,8 @@ def book_seats(request, showtime_id):
                 return render_booking(form)
 
             booking = form.save(commit=False)
+            if request.user.is_authenticated:
+                booking.user = request.user
             booking.showtime = current_showtime
             booking.selected_seats = selected_seats
             booking.total_paid = sum(
@@ -689,3 +733,227 @@ def page_not_found(request, exception):
         },
         status=404,
     )
+
+
+def register(request):
+    selected_city = select_city(request)
+    if request.user.is_authenticated:
+        return redirect("movie_list")
+
+    redirect_to = request.POST.get("next") or request.GET.get("next") or ""
+    if not redirect_to or not url_has_allowed_host_and_scheme(
+        redirect_to,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        redirect_to = reverse("movie_list")
+
+    if request.method == "POST":
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(
+                request,
+                user,
+                backend="movies.authentication.UsernameOrEmailBackend",
+            )
+            messages.success(
+                request,
+                f"Welcome to CineBook, {user.first_name or user.username}! Your account has been registered successfully.",
+            )
+            return redirect(redirect_to)
+    else:
+        form = UserRegistrationForm()
+
+    return render(
+        request,
+        "movies/register.html",
+        {
+            "form": form,
+            "selected_city": selected_city,
+            "next": redirect_to,
+        },
+    )
+
+
+@login_required
+def user_bookings(request):
+    selected_city = select_city(request)
+    bookings = (
+        SeatBooking.objects.filter(user=request.user)
+        .select_related(
+            "showtime__movie",
+            "showtime__screen__theatre",
+        )
+        .order_by("-booked_at")
+    )
+    return render(
+        request,
+        "movies/my_bookings.html",
+        {
+            "bookings": bookings,
+            "selected_city": selected_city,
+        },
+    )
+
+
+def search_suggestions(request):
+    q = request.GET.get("q", "").strip()
+    if len(q) < 1:
+        return JsonResponse({"results": []})
+
+    matches = (
+        Movie.objects.filter(
+            Q(title__icontains=q)
+            | Q(genre__icontains=q)
+            | Q(language__icontains=q)
+            | Q(cast_and_crew__name__icontains=q)
+        )
+        .distinct()
+        .order_by(
+            Case(
+                When(title__istartswith=q, then=Value(0)),
+                When(title__icontains=q, then=Value(1)),
+                default=Value(2),
+                output_field=IntegerField(),
+            ),
+            "title",
+        )[:6]
+    )
+    results = [
+        {
+            "id": m.pk,
+            "title": m.title,
+            "genre": m.genre,
+            "language": m.language,
+            "duration": m.duration,
+            "poster_url": m.poster_url,
+            "detail_url": reverse("movie_detail", args=[m.pk]),
+            "book_url": reverse("movie_showtimes", args=[m.pk]),
+        }
+        for m in matches
+    ]
+    return JsonResponse({"results": results})
+
+
+
+# ---------------------------------------------------------------------------
+# Admin login / dashboard
+# ---------------------------------------------------------------------------
+
+def admin_login(request):
+    """Dedicated admin login. Credentials come from settings, not frontend JS."""
+    if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+        return redirect("admin_dashboard")
+
+    selected_city = select_city(request)
+    error = None
+
+    if request.method == "POST":
+        form = AdminLoginForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            if user is not None and (user.is_staff or user.is_superuser):
+                login(request, user)
+                return redirect("admin_dashboard")
+            else:
+                error = "Access denied. You do not have administrator privileges."
+        else:
+            error = "Invalid admin credentials. Please try again."
+    else:
+        form = AdminLoginForm(request)
+
+    return render(
+        request,
+        "movies/admin_login.html",
+        {"form": form, "error": error, "selected_city": selected_city},
+    )
+
+
+def _admin_required(view_fn):
+    """Decorator: user must be authenticated AND staff/superuser."""
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect(reverse("admin_login") + "?next=" + request.path)
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, "You don't have permission to access the admin area.")
+            return redirect("movie_list")
+        return view_fn(request, *args, **kwargs)
+    wrapped.__name__ = view_fn.__name__
+    return wrapped
+
+
+@_admin_required
+def admin_dashboard(request):
+    """Admin dashboard with real database records."""
+    selected_city = select_city(request)
+    User = get_user_model()
+
+    user_search = request.GET.get("user_search", "").strip()
+    booking_search = request.GET.get("booking_search", "").strip()
+
+    users_qs = User.objects.order_by("-date_joined")
+    if user_search:
+        users_qs = users_qs.filter(
+            Q(username__icontains=user_search)
+            | Q(email__icontains=user_search)
+            | Q(first_name__icontains=user_search)
+            | Q(last_name__icontains=user_search)
+        )
+
+    bookings_qs = (
+        SeatBooking.objects
+        .select_related("showtime__movie", "showtime__screen__theatre", "user")
+        .order_by("-booked_at")
+    )
+    if booking_search:
+        bookings_qs = bookings_qs.filter(
+            Q(customer_name__icontains=booking_search)
+            | Q(customer_email__icontains=booking_search)
+            | Q(showtime__movie__title__icontains=booking_search)
+        )
+
+    reservations_qs = (
+        SeatReservation.objects
+        .select_related("showtime__movie", "showtime__screen__theatre", "booking")
+        .order_by("-pk")
+    )
+
+    total_users = User.objects.count()
+    total_bookings = SeatBooking.objects.count()
+    total_reservations = SeatReservation.objects.count()
+    total_revenue = SeatBooking.objects.aggregate(total=Sum("total_paid"))["total"] or 0
+
+    return render(
+        request,
+        "movies/admin_dashboard.html",
+        {
+            "selected_city": selected_city,
+            "users": users_qs[:200],
+            "bookings": bookings_qs[:200],
+            "reservations": reservations_qs[:200],
+            "user_search": user_search,
+            "booking_search": booking_search,
+            "total_users": total_users,
+            "total_bookings": total_bookings,
+            "total_reservations": total_reservations,
+            "total_revenue": total_revenue,
+        },
+    )
+
+
+@_admin_required
+def admin_toggle_user(request, user_id):
+    """Toggle a user account active/inactive."""
+    if request.method != "POST":
+        return redirect("admin_dashboard")
+    User = get_user_model()
+    target = get_object_or_404(User, pk=user_id)
+    if target == request.user:
+        messages.warning(request, "You cannot deactivate your own account.")
+    else:
+        target.is_active = not target.is_active
+        target.save(update_fields=["is_active"])
+        action = "activated" if target.is_active else "deactivated"
+        messages.success(request, f"User '{target.username}' has been {action}.")
+    return redirect("admin_dashboard")

@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.validators import (
     MaxValueValidator,
     MinValueValidator,
@@ -38,6 +39,14 @@ class Movie(models.Model):
     )
     catalogue_rating_source = models.CharField(max_length=100, blank=True)
     is_featured = models.BooleanField(default=False)
+    is_recommended = models.BooleanField(
+        default=False,
+        help_text="Featured in Top Recommended Movies / Editor's Picks section.",
+    )
+    ranking = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Display priority ranking for recommendations.",
+    )
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
@@ -365,6 +374,14 @@ class SeatBooking(models.Model):
         on_delete=models.CASCADE,
         related_name="bookings"
     )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bookings",
+        help_text="Registered user who made this booking, if authenticated.",
+    )
     customer_name = models.CharField(max_length=100)
     customer_email = models.EmailField()
     customer_phone = models.CharField(max_length=30, blank=True)
@@ -386,6 +403,10 @@ class SeatBooking(models.Model):
     )
     confirmation_email_sent = models.BooleanField(default=False)
     booked_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def booking_reference(self):
+        return f"CB-{str(self.confirmation_token)[:8].upper()}"
 
     def __str__(self):
         return f"{self.customer_name} - {self.showtime}"

@@ -1,37 +1,58 @@
 {% extends 'movies/base.html' %}
 
-{% block title %}Log in | CineBook{% endblock %}
+{% block title %}Log In | CineBook{% endblock %}
 
 {% block content %}
 <div class="container-xl page-shell">
-    <section class="login-card" aria-labelledby="login-title">
-        <span class="eyebrow">WELCOME BACK</span>
-        <h1 id="login-title">Log in to CineBook</h1>
-        <p>Use your username or email address and password.</p>
-        {% if form.non_field_errors %}
-            <div class="alert alert-danger" role="alert">
-                {{ form.non_field_errors }}
+    <div class="auth-wrapper">
+        <section class="auth-card" aria-labelledby="login-title">
+            <div class="auth-card-header text-center mb-4">
+                <span class="auth-badge">WELCOME BACK</span>
+                <h1 id="login-title" class="auth-title">Log in to CineBook</h1>
+                <p class="auth-subtitle">Access your bookings, reservations, and community reviews.</p>
             </div>
-        {% endif %}
-        <form method="post">
-            {% csrf_token %}
-            {% if next %}
-                <input type="hidden" name="next" value="{{ next }}">
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ form.non_field_errors }}
+                </div>
             {% endif %}
-            <div class="mb-3">
-                {{ form.username.label_tag }}
-                {{ form.username }}
-                {{ form.username.errors }}
+
+            <form method="post" class="auth-form" id="login-form">
+                {% csrf_token %}
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ form.username.id_for_label }}" class="form-label">Username or email</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="field-error-text">{{ form.username.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="field-error-text">{{ form.password.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-cine-primary w-100 py-2" id="login-btn">
+                        <span>Log in</span>
+                    </button>
+                </div>
+            </form>
+
+            <div class="auth-footer text-center mt-4 pt-3 border-top border-secondary-subtle">
+                <p class="mb-0 text-muted">Don't have an account yet?
+                    <a href="{% url 'register' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="auth-link">Register now</a>
+                </p>
             </div>
-            <div class="mb-3">
-                {{ form.password.label_tag }}
-                {{ form.password }}
-                {{ form.password.errors }}
-            </div>
-            <button type="submit" class="btn btn-cine-primary w-100">
-                Log in
-            </button>
-        </form>
-    </section>
+        </section>
+    </div>
 </div>
 {% endblock %}

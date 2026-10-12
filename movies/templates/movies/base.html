@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}CineBook | Stories on the big screen{% endblock %}</title>
+    <title>{% block title %}CineBook | Premium Cinema Ticket Booking & Community Reviews{% endblock %}</title>
 
     <script>
         (() => {
@@ -26,10 +25,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
           rel="stylesheet">
     {% load static %}
-    <link rel="stylesheet" href="{% static 'movies/css/style.css' %}?v=20">
+    <link rel="stylesheet" href="{% static 'movies/css/style.css' %}?v=23">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap"
           rel="stylesheet">
 </head>
 <body>
@@ -47,40 +46,64 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="mainNavigation">
-                <div class="navbar-nav me-auto ms-lg-4">
+                <div class="nav-search-container mx-lg-auto my-2 my-lg-0">
+                    <form class="nav-search" method="get" action="{% url 'movie_list' %}" id="nav-search-form" role="search">
+                        <input type="hidden" name="city" value="{{ selected_city }}">
+                        <span class="nav-search-icon" aria-hidden="true">⌕</span>
+                        <label for="nav-search" class="visually-hidden">Search movies</label>
+                        <input id="nav-search" type="search" name="q"
+                               placeholder="Search movies by title, genre, actor..."
+                               value="{{ request.GET.q|default:'' }}"
+                               autocomplete="off"
+                               aria-label="Search movies">
+                        <button type="button" class="nav-search-clear" id="nav-search-clear" aria-label="Clear search input"
+                                {% if not request.GET.q %}hidden{% endif %}>×</button>
+                        <button type="submit" class="nav-search-submit" aria-label="Submit search">Search</button>
+                    </form>
+                    <div class="search-suggestions-dropdown" id="search-suggestions-box" hidden aria-live="polite"></div>
+                </div>
+
+                <div class="navbar-nav align-items-lg-center gap-2 ms-lg-3">
                     {% if user.is_authenticated %}
-                        <span class="nav-link nav-account-name">
-                            {{ user.get_username }}
-                        </span>
-                        <form method="post" action="{% url 'logout' %}"
-                              class="nav-logout-form">
+                        <div class="nav-user-info">
+                            <span class="nav-account-name">
+                                <span class="user-icon" aria-hidden="true">👤</span>
+                                {{ user.first_name|default:user.get_username }}
+                            </span>
+                        </div>
+                        <a class="nav-link nav-bookings-link" href="{% url 'user_bookings' %}">
+                            <span>🎟 My Bookings</span>
+                        </a>
+                        {% if user.is_staff or user.is_superuser %}
+                            <a class="btn btn-sm btn-cine-quiet" href="{% url 'admin_dashboard' %}" id="admin-dashboard-nav-btn">
+                                ⚙️ Admin
+                            </a>
+                        {% endif %}
+                        <form method="post" action="{% url 'logout' %}" class="nav-logout-form m-0">
                             {% csrf_token %}
-                            <button type="submit" class="nav-link nav-account-link">
+                            <button type="submit" class="btn btn-sm btn-cine-quiet" id="logout-btn">
                                 Log out
                             </button>
                         </form>
                     {% else %}
-                        <a class="nav-link nav-account-link"
-                           href="{% url 'login' %}">Log in</a>
+                        <a class="btn btn-sm btn-cine-quiet" href="{% url 'login' %}">Log in</a>
+                        <a class="btn btn-sm btn-cine-primary" href="{% url 'register' %}">Register</a>
+                        <a class="btn btn-sm btn-outline-secondary btn-admin-nav" href="{% url 'admin_login' %}" title="Admin login" id="admin-login-nav-btn">
+                            🔐 Admin
+                        </a>
                     {% endif %}
                 </div>
-                <form class="nav-search" method="get"
-                      action="{% url 'movie_list' %}">
-                    <input type="hidden" name="city" value="{{ selected_city }}">
-                    <label for="nav-search" class="visually-hidden">Search movies</label>
-                    <input id="nav-search" type="search" name="q"
-                           placeholder="Find a movie…" aria-label="Search movies">
-                    <button type="submit" aria-label="Submit movie search">⌕</button>
-                </form>
-                <div class="nav-actions">
+
+                <div class="nav-actions ms-lg-3">
                     <button type="button" class="theme-toggle"
-                            data-theme-toggle aria-pressed="false">
+                            data-theme-toggle aria-pressed="false" title="Toggle theme">
                         <span data-theme-icon aria-hidden="true">☾</span>
                         <span data-theme-label>Dark</span>
                     </button>
                     <button type="button" class="city-picker-trigger"
-                            data-open-city-picker aria-haspopup="dialog">
-                        <span>{{ selected_city }}</span>
+                            data-open-city-picker aria-haspopup="dialog" title="Change city">
+                        <span class="city-pin" aria-hidden="true">📍</span>
+                        <span class="selected-city-text">{{ selected_city }}</span>
                         <span aria-hidden="true">⌄</span>
                     </button>
                 </div>
@@ -89,11 +112,12 @@
       </nav>
       <nav class="cine-secondary-nav" aria-label="Secondary navigation">
         <div class="container-xl">
-          <a href="{% url 'movie_list' %}#catalogue">Movies</a>
-          <a href="{% url 'movie_list' %}#reviews">Community</a>
-          <a href="{% url 'movie_list' %}#offers">Offers</a>
+          <a href="{% url 'movie_list' %}#hero">Featured</a>
+          <a href="{% url 'movie_list' %}#recommended">Editor's Picks</a>
+          <a href="{% url 'movie_list' %}#now-showing">Now Showing</a>
+          <a href="{% url 'movie_list' %}#catalogue">Catalogue</a>
+          <a href="{% url 'movie_list' %}#reviews">Reviews</a>
           <a href="{% url 'about' %}">About</a>
-          <a href="{% url 'about' %}#contact">Contact</a>
         </div>
       </nav>
     </header>
@@ -129,13 +153,16 @@
         </div>
     </dialog>
 
-    <main>
+    <main id="main-content">
         {% if messages %}
-            {% for message in messages %}
-                <div class="container-xl pt-3">
-                    <div class="alert alert-success" role="status">{{ message }}</div>
-                </div>
-            {% endfor %}
+            <div class="container-xl pt-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="status">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
 
         {% block content %}{% endblock %}
@@ -143,19 +170,40 @@
 
     <footer class="site-footer">
         <div class="container-xl footer-inner">
-            <a class="cine-brand" href="{% url 'movie_list' %}">
-                <span class="brand-mark" aria-hidden="true">C</span>
-                Cine<span>Book</span>
-            </a>
-            <p class="mb-0">Good stories deserve the big screen.</p>
-            <span class="footer-note">Community ratings are submitted by viewers.</span>
-            <a class="footer-note" href="{% url 'about' %}#contact">Contact</a>
-            <a class="footer-note" href="{% url 'about' %}">About &amp; credits</a>
+            <div class="footer-brand-col">
+                <a class="cine-brand" href="{% url 'movie_list' %}">
+                    <span class="brand-mark" aria-hidden="true">C</span>
+                    Cine<span>Book</span>
+                </a>
+                <p class="footer-tagline">Stories on the big screen. Premium cinema ticket booking with seamless seat selection and community reviews.</p>
+            </div>
+            <div class="footer-links-col">
+                <h4 class="footer-heading">Explore</h4>
+                <a href="{% url 'movie_list' %}#recommended">Top Recommended</a>
+                <a href="{% url 'movie_list' %}#now-showing">Now Showing</a>
+                <a href="{% url 'movie_list' %}#catalogue">Catalogue</a>
+                <a href="{% url 'movie_list' %}#reviews">Community Reviews</a>
+            </div>
+            <div class="footer-links-col">
+                <h4 class="footer-heading">Account & Help</h4>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'user_bookings' %}">My Bookings</a>
+                {% else %}
+                    <a href="{% url 'login' %}">Log In</a>
+                    <a href="{% url 'register' %}">Create Account</a>
+                {% endif %}
+                <a href="{% url 'about' %}">About CineBook</a>
+                <a href="{% url 'about' %}#contact">Contact & Support</a>
+            </div>
+        </div>
+        <div class="container-xl footer-bottom">
+            <span>© {% now "Y" %} CineBook Cinema Portal. All rights reserved.</span>
+            <span class="footer-note">Demonstration ticket booking portal. Ratings submitted by real viewers.</span>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{% static 'movies/js/main.js' %}?v=5" defer></script>
+    <script src="{% static 'movies/js/main.js' %}?v=6" defer></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

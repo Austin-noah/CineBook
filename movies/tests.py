@@ -1501,3 +1501,247 @@ class TMDBArtworkImportTests(TestCase):
         self.assertIn("Unmatched or ambiguous", output.getvalue())
         self.assertEqual(self.movie.poster_url, "")
         self.assertEqual(self.movie.backdrop_url, "")
+
+
+class EnhancedFeatureTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.user1 = User.objects.create_user(
+            username="viewer1",
+            email="viewer1@example.com",
+            password="SecurePassword123!",
+            first_name="Jane",
+            last_name="Doe",
+        )
+        self.user2 = User.objects.create_user(
+            username="viewer2",
+            email="viewer2@example.com",
+            password="SecurePassword456!",
+            first_name="John",
+            last_name="Smith",
+        )
+        self.theatre = Theatre.objects.create(
+            name="CineBook Grand",
+            city="Hyderabad",
+            address="Test Avenue, Hyderabad",
+        )
+        self.screen = Screen.objects.create(
+            theatre=self.theatre,
+            name="Screen 1",
+        )
+        self.salaar = Movie.objects.create(
+            title="Salaar: Part 1 – Ceasefire",
+            genre="Action / Thriller",
+            duration=175,
+            release_date=date(2023, 12, 22),
+            language="Telugu",
+            description="A violent battle for Khansaar throne.",
+            is_featured=True,
+            is_recommended=True,
+            ranking=1,
+            status=Movie.Status.NOW_SHOWING,
+        )
+        MoviePerson.objects.create(
+            movie=self.salaar,
+            name="Prashanth Neel",
+            role=MoviePerson.Role.DIRECTOR,
+            display_order=1,
+        )
+        MoviePerson.objects.create(
+            movie=self.salaar,
+            name="Prabhas",
+            role=MoviePerson.Role.MAIN_CAST,
+            character_name="Deva / Salaar",
+            display_order=2,
+        )
+        self.showtime = Showtime.objects.create(
+            movie=self.salaar,
+            screen=self.screen,
+            show_date=date(2027, 2, 1),
+            show_time=time(19, 0),
+            ticket_price=Decimal("150.00"),
+            language="Telugu",
+            format="2D",
+        )
+
+    def test_user_registration_creates_account_and_hashes_password(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "newcinephile",
+                "email": "new@example.com",
+                "first_name": "New",
+                "last_name": "User",
+                "password1": "StrongPass!99",
+                "password2": "StrongPass!99",
+            },
+        )
+        self.assertRedirects(response, reverse("movie_list"))
+        User = get_user_model()
+        new_user = User.objects.get(username="newcinephile")
+        self.assertEqual(new_user.email, "new@example.com")
+        self.assertTrue(new_user.check_password("StrongPass!99"))
+        self.assertNotEqual(new_user.password, "StrongPass!99")
+        # Session confirms user is logged in
+        self.assertEqual(int(self.client.session["_auth_user_id"]), new_user.pk)
+
+    def test_user_registration_duplicate_email_rejected(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "anotheruser",
+                "email": "viewer1@example.com",
+                "password1": "StrongPass!99",
+                "password2": "StrongPass!99",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFormError(
+            response.context["form"],
+            "email",
+            "An account with this email address already exists. Please log in.",
+        )
+
+    def test_user_registration_password_mismatch(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "mismatchuser",
+                "email": "mismatch@example.com",
+                "password1": "PasswordOne1!",
+                "password2": "PasswordTwo2!",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].errors)
+
+    def test_my_bookings_requires_login(self):
+        response = self.client.get(reverse("user_bookings"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login/", response.url)
+
+    def test_my_bookings_displays_only_authenticated_users_bookings(self):
+        # Booking belonging to user1
+        booking1 = SeatBooking.objects.create(
+            user=self.user1,
+            showtime=self.showtime,
+            customer_name="Jane Doe",
+            customer_email="viewer1@example.com",
+            selected_seats=["G01", "G02"],
+            total_paid=Decimal("300.00"),
+        )
+        # Booking belonging to user2
+        booking2 = SeatBooking.objects.create(
+            user=self.user2,
+            showtime=self.showtime,
+            customer_name="John Smith",
+            customer_email="viewer2@example.com",
+            selected_seats=["G03"],
+            total_paid=Decimal("150.00"),
+        )
+
+        self.client.force_login(self.user1)
+        response = self.client.get(reverse("user_bookings"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, booking1.booking_reference)
+        self.assertNotContains(response, booking2.booking_reference)
+        self.assertEqual(list(response.context["bookings"]), [booking1])
+
+    def test_authenticated_booking_saves_user_foreign_key(self):
+        self.client.force_login(self.user1)
+        response = self.client.post(
+            reverse("book_seats", args=[self.showtime.pk]),
+            {
+                "customer_name": "Jane Doe",
+                "customer_email": "viewer1@example.com",
+                "ticket_quantity": "2",
+                "selected_seats": ["G05", "G06"],
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        booking = SeatBooking.objects.get(selected_seats=["G05", "G06"])
+        self.assertEqual(booking.user, self.user1)
+        self.assertTrue(booking.booking_reference.startswith("CB-"))
+
+    def test_guest_booking_without_user_continues_to_work(self):
+        response = self.client.post(
+            reverse("book_seats", args=[self.showtime.pk]),
+            {
+                "customer_name": "Guest Customer",
+                "customer_email": "guest@example.com",
+                "ticket_quantity": "1",
+                "selected_seats": ["G07"],
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        booking = SeatBooking.objects.get(selected_seats=["G07"])
+        self.assertIsNone(booking.user)
+
+    def test_salaar_featured_in_recommended_section_and_hero(self):
+        response = self.client.get(reverse("movie_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Salaar: Part 1 – Ceasefire")
+        self.assertContains(response, "Top Recommended Movies")
+        self.assertContains(response, "Prashanth Neel")
+        self.assertContains(response, "Prabhas")
+        self.assertEqual(response.context["featured_movie"], self.salaar)
+        self.assertIn(self.salaar, response.context["top_movies"])
+
+    def test_search_by_actor_and_title(self):
+        response_title = self.client.get(reverse("movie_list"), {"q": "Salaar"})
+        self.assertIn(self.salaar, response_title.context["movies"])
+
+        response_actor = self.client.get(reverse("movie_list"), {"q": "Prabhas"})
+        self.assertIn(self.salaar, response_actor.context["movies"])
+
+    def test_search_suggestions_endpoint(self):
+        response = self.client.get(reverse("search_suggestions"), {"q": "Salaar"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(any(item["title"] == "Salaar: Part 1 – Ceasefire" for item in data["results"]))
+
+    def test_adjacent_seat_selection_algorithm(self):
+        from movies.adjacent_seats import select_adjacent_seats, STANDARD_ROWS
+
+        row_b = STANDARD_ROWS["B"]  # B1 to B8
+        row_c = STANDARD_ROWS["C"]  # C1 to C8
+
+        # 3 tickets, choose B3 -> B3, B4, B5
+        self.assertEqual(
+            select_adjacent_seats(row_b, "B3", 3),
+            ["B3", "B4", "B5"],
+        )
+
+        # 2 tickets, choose C6 -> C6, C7
+        self.assertEqual(
+            select_adjacent_seats(row_c, "C6", 2),
+            ["C6", "C7"],
+        )
+
+        # 3 tickets at boundary: select B7 in 8-seat row -> shift left to B6, B7, B8
+        self.assertEqual(
+            select_adjacent_seats(row_b, "B7", 3),
+            ["B6", "B7", "B8"],
+        )
+
+        # B4 is booked: selecting B3 with 3 tickets falls back to available block [B1, B2, B3]
+        self.assertEqual(
+            select_adjacent_seats(row_b, "B3", 3, booked_seats=["B4"]),
+            ["B1", "B2", "B3"],
+        )
+
+        # No contiguous block of 3 exists when alternating seats booked -> returns None
+        self.assertIsNone(
+            select_adjacent_seats(row_b, "B3", 3, booked_seats=["B2", "B4", "B6"])
+        )
+
+    def test_admin_seatbooking_configuration(self):
+        from movies.admin import SeatBookingAdmin
+        booking_admin = SeatBookingAdmin(SeatBooking, admin.site)
+        self.assertIn("booking_reference", booking_admin.list_display)
+        self.assertIn("user_account", booking_admin.list_display)
+        self.assertIn("movie_title", booking_admin.list_display)
+        self.assertEqual(booking_admin.date_hierarchy, "booked_at")
+        self.assertIn("user", booking_admin.readonly_fields)
+        self.assertIn("booking_reference", booking_admin.readonly_fields)
+

@@ -1,0 +1,227 @@
+{% extends 'movies/base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard | CineBook{% endblock %}
+
+{% block content %}
+<div class="container-xl page-shell">
+
+    <div class="admin-dash-header mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <span class="auth-badge admin-badge">&#128272; ADMIN PANEL</span>
+                <h1 class="auth-title mb-1">Dashboard</h1>
+                <p class="auth-subtitle mb-0">Logged in as <strong>{{ request.user.username }}</strong></p>
+            </div>
+            <form method="post" action="{% url 'logout' %}" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-cine-quiet">Log out</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stats cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="admin-stat-card">
+                <div class="admin-stat-value">{{ total_users }}</div>
+                <div class="admin-stat-label">Registered Users</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="admin-stat-card">
+                <div class="admin-stat-value">{{ total_bookings }}</div>
+                <div class="admin-stat-label">Bookings Made</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="admin-stat-card">
+                <div class="admin-stat-value">{{ total_reservations }}</div>
+                <div class="admin-stat-label">Seats Reserved</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="admin-stat-card">
+                <div class="admin-stat-value">&#8377;{{ total_revenue|floatformat:0 }}</div>
+                <div class="admin-stat-label">Total Revenue</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users table -->
+    <section class="admin-section mb-5" aria-labelledby="users-heading">
+        <div class="admin-section-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h2 id="users-heading" class="admin-section-title">Registered Users</h2>
+            <form method="get" class="d-flex gap-2" id="user-search-form">
+                <input type="hidden" name="booking_search" value="{{ booking_search }}">
+                <input type="search" name="user_search" value="{{ user_search }}"
+                       class="form-control form-control-sm" placeholder="Search users..." style="max-width:220px">
+                <button type="submit" class="btn btn-sm btn-cine-quiet">Search</button>
+            </form>
+        </div>
+        {% if users %}
+            <div class="table-responsive">
+                <table class="table admin-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Joined</th>
+                            <th>Status</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td>{{ u.pk }}</td>
+                            <td><strong>{{ u.username }}</strong></td>
+                            <td>{{ u.get_full_name|default:"—" }}</td>
+                            <td>{{ u.email|default:"—" }}</td>
+                            <td>{{ u.date_joined|date:"d M Y" }}</td>
+                            <td>
+                                {% if u.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if u.is_superuser %}
+                                    <span class="badge bg-danger">Superuser</span>
+                                {% elif u.is_staff %}
+                                    <span class="badge bg-warning text-dark">Staff</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">User</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if u != request.user %}
+                                    <form method="post" action="{% url 'admin_toggle_user' u.pk %}" class="m-0">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-xs btn-outline-secondary" title="Toggle active/inactive">
+                                            {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-muted small">You</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No users found{% if user_search %} matching "{{ user_search }}"{% endif %}.</p>
+        {% endif %}
+    </section>
+
+    <!-- Bookings table -->
+    <section class="admin-section mb-5" aria-labelledby="bookings-heading">
+        <div class="admin-section-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h2 id="bookings-heading" class="admin-section-title">Movie Bookings</h2>
+            <form method="get" class="d-flex gap-2" id="booking-search-form">
+                <input type="hidden" name="user_search" value="{{ user_search }}">
+                <input type="search" name="booking_search" value="{{ booking_search }}"
+                       class="form-control form-control-sm" placeholder="Search bookings..." style="max-width:220px">
+                <button type="submit" class="btn btn-sm btn-cine-quiet">Search</button>
+            </form>
+        </div>
+        {% if bookings %}
+            <div class="table-responsive">
+                <table class="table admin-table">
+                    <thead>
+                        <tr>
+                            <th>Ref</th>
+                            <th>Movie</th>
+                            <th>Showtime</th>
+                            <th>Customer</th>
+                            <th>Account</th>
+                            <th>Seats</th>
+                            <th>Total</th>
+                            <th>Booked At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in bookings %}
+                        <tr>
+                            <td><code class="small">{{ b.booking_reference }}</code></td>
+                            <td>{{ b.showtime.movie.title }}</td>
+                            <td>{{ b.showtime.show_date }} {{ b.showtime.show_time|time:"g:i A" }}</td>
+                            <td>
+                                {{ b.customer_name }}<br>
+                                <small class="text-muted">{{ b.customer_email }}</small>
+                            </td>
+                            <td>
+                                {% if b.user %}
+                                    <span class="small">{{ b.user.username }}</span>
+                                {% else %}
+                                    <span class="text-muted small">Guest</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if b.selected_seats %}
+                                    <span class="small">{{ b.selected_seats|join:", " }}</span>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                            <td>&#8377;{{ b.total_paid }}</td>
+                            <td>{{ b.booked_at|date:"d M Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No bookings found{% if booking_search %} matching "{{ booking_search }}"{% endif %}.</p>
+        {% endif %}
+    </section>
+
+    <!-- Reserved Seats table -->
+    <section class="admin-section mb-5" aria-labelledby="seats-heading">
+        <h2 id="seats-heading" class="admin-section-title mb-3">Reserved Seats</h2>
+        {% if reservations %}
+            <div class="table-responsive">
+                <table class="table admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Movie</th>
+                            <th>Show</th>
+                            <th>Seat</th>
+                            <th>Booking Ref</th>
+                            <th>Theatre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reservations %}
+                        <tr>
+                            <td>{{ r.pk }}</td>
+                            <td>{{ r.showtime.movie.title }}</td>
+                            <td>{{ r.showtime.show_date }} {{ r.showtime.show_time|time:"g:i A" }}</td>
+                            <td><strong>{{ r.seat_number }}</strong></td>
+                            <td>
+                                {% if r.booking %}
+                                    <code class="small">{{ r.booking.booking_reference }}</code>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ r.showtime.screen.theatre.name }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No seat reservations found.</p>
+        {% endif %}
+    </section>
+
+</div>
+{% endblock %}

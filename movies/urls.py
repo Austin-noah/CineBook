@@ -20,6 +20,9 @@ urlpatterns = [
         auth_views.LogoutView.as_view(next_page="movie_list"),
         name="logout",
     ),
+    path("register/", views.register, name="register"),
+    path("my-bookings/", views.user_bookings, name="user_bookings"),
+    path("api/search-suggestions/", views.search_suggestions, name="search_suggestions"),
     path("about/", views.about, name="about"),
     path("movie/<int:movie_id>/", views.movie_detail, name="movie_detail"),
     path(
@@ -43,4 +46,7 @@ urlpatterns = [
         views.verify_ticket,
         name="verify_ticket",
     ),
+    path("admin-login/", views.admin_login, name="admin_login"),
+    path("admin-dashboard/", views.admin_dashboard, name="admin_dashboard"),
+    path("admin-dashboard/user/<int:user_id>/toggle/", views.admin_toggle_user, name="admin_toggle_user"),
 ]

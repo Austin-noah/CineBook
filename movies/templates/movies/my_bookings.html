@@ -1,0 +1,121 @@
+{% extends 'movies/base.html' %}
+{% load static %}
+
+{% block title %}My Bookings | CineBook{% endblock %}
+
+{% block content %}
+<div class="container-xl page-shell">
+    <div class="my-bookings-header">
+        <div>
+            <span class="eyebrow">YOUR RESERVATIONS</span>
+            <h1 class="my-bookings-title">My Bookings</h1>
+            <p class="my-bookings-subtitle">Manage and review your movie ticket reservations.</p>
+        </div>
+        <a href="{% url 'movie_list' %}" class="btn btn-cine-primary">
+            + Book Another Movie
+        </a>
+    </div>
+
+    {% if bookings %}
+        <div class="bookings-grid">
+            {% for booking in bookings %}
+                <article class="booking-history-card">
+                    <div class="booking-card-top">
+                        <div class="booking-ref-badge">
+                            <span class="badge-label">Ref</span>
+                            <strong>{{ booking.booking_reference }}</strong>
+                        </div>
+                        <span class="booking-date">
+                            Booked on {{ booking.booked_at|date:"d M Y, g:i A" }}
+                        </span>
+                    </div>
+
+                    <div class="booking-card-body">
+                        <div class="booking-movie-thumb">
+                            {% if booking.showtime.movie.poster_url %}
+                                <img src="{{ booking.showtime.movie.poster_url }}"
+                                     alt="{{ booking.showtime.movie.title }} poster"
+                                     data-image-fallback>
+                                <div class="poster-placeholder" hidden aria-hidden="true">
+                                    <span>{{ booking.showtime.movie.title|slice:":1" }}</span>
+                                </div>
+                            {% else %}
+                                <div class="poster-placeholder" aria-hidden="true">
+                                    <span>{{ booking.showtime.movie.title|slice:":1" }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="booking-details">
+                            <h2 class="booking-movie-title">
+                                <a href="{% url 'movie_detail' booking.showtime.movie_id %}">
+                                    {{ booking.showtime.movie.title }}
+                                </a>
+                            </h2>
+                            <p class="booking-meta">
+                                <span>{{ booking.showtime.movie.genre }}</span>
+                                <span>·</span>
+                                <span>{{ booking.showtime.language|default:booking.showtime.movie.language }}</span>
+                                {% if booking.showtime.format %}
+                                    <span>·</span>
+                                    <span>{{ booking.showtime.format }}</span>
+                                {% endif %}
+                            </p>
+
+                            <div class="booking-info-rows">
+                                <div class="info-row">
+                                    <span class="info-label">Venue:</span>
+                                    <span class="info-val">{{ booking.showtime.screen.theatre.name }}, {{ booking.showtime.screen.theatre.city }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Screen:</span>
+                                    <span class="info-val">{{ booking.showtime.screen.name }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Showtime:</span>
+                                    <span class="info-val font-accent">{{ booking.showtime.show_date|date:"D, d M Y" }} at {{ booking.showtime.show_time|time:"g:i A" }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Seats:</span>
+                                    <span class="info-val seat-badges">
+                                        {% for seat in booking.selected_seats %}
+                                            <span class="seat-pill">{{ seat }}</span>
+                                        {% endfor %}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Total Amount:</span>
+                                    <span class="info-val price-val">₹{{ booking.total_paid|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="booking-card-footer">
+                        <span class="booking-status-tag confirmed">
+                            ✓ Confirmed
+                        </span>
+                        <div class="booking-actions">
+                            <a href="{% url 'booking_success' booking.confirmation_token %}" class="btn btn-cine-primary btn-sm">
+                                View Ticket
+                            </a>
+                            <a href="{% url 'verify_ticket' booking.verification_token %}" class="btn btn-cine-quiet btn-sm" target="_blank" rel="noopener">
+                                Verify QR
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state bookings-empty">
+            <span class="empty-icon" aria-hidden="true">🎟</span>
+            <h2>No bookings found</h2>
+            <p>You haven't reserved any movie tickets with this account yet.</p>
+            <a href="{% url 'movie_list' %}" class="btn btn-cine-primary mt-3">
+                Browse Movies Now
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -171,3 +171,75 @@ document.querySelectorAll("[data-review-copy]").forEach((copy) => {
         readMore.textContent = expanded ? "Read less" : "Read more";
     });
 });
+
+// Nav search clear button and live autocomplete suggestions
+const navSearchInput = document.getElementById("nav-search");
+const navSearchClear = document.getElementById("nav-search-clear");
+const suggestionsBox = document.getElementById("search-suggestions-box");
+
+if (navSearchInput) {
+    function toggleClearBtn() {
+        if (navSearchClear) {
+            navSearchClear.hidden = !navSearchInput.value.trim();
+        }
+    }
+    navSearchInput.addEventListener("input", toggleClearBtn);
+    if (navSearchClear) {
+        navSearchClear.addEventListener("click", () => {
+            navSearchInput.value = "";
+            toggleClearBtn();
+            if (suggestionsBox) suggestionsBox.hidden = true;
+            navSearchInput.focus();
+        });
+    }
+
+    let debounceTimer = null;
+    navSearchInput.addEventListener("input", () => {
+        clearTimeout(debounceTimer);
+        const query = navSearchInput.value.trim();
+        if (query.length < 2) {
+            if (suggestionsBox) suggestionsBox.hidden = true;
+            return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/search-suggestions/?q=${encodeURIComponent(query)}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data.results || data.results.length === 0) {
+                    if (suggestionsBox) suggestionsBox.hidden = true;
+                    return;
+                }
+
+                if (suggestionsBox) {
+                    suggestionsBox.innerHTML = data.results.map((movie) => `
+                        <a href="${movie.detail_url}" class="suggestion-item">
+                            ${movie.poster_url ? `<img src="${movie.poster_url}" alt="" class="suggestion-thumb">` : `<div class="suggestion-thumb-placeholder">🎬</div>`}
+                            <div class="suggestion-text">
+                                <div class="suggestion-title">${movie.title}</div>
+                                <div class="suggestion-meta">${movie.genre} · ${movie.language} (${movie.year})</div>
+                            </div>
+                        </a>
+                    `).join("");
+                    suggestionsBox.hidden = false;
+                }
+            } catch (err) {
+                console.warn("Could not fetch search suggestions:", err);
+            }
+        }, 220);
+    });
+
+    document.addEventListener("click", (e) => {
+        if (suggestionsBox && !suggestionsBox.contains(e.target) && e.target !== navSearchInput) {
+            suggestionsBox.hidden = true;
+        }
+    });
+
+    navSearchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && suggestionsBox) {
+            suggestionsBox.hidden = true;
+        }
+    });
+}
+

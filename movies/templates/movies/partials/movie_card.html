@@ -1,4 +1,4 @@
-<article class="movie-card">
+<article class="movie-card {% if movie.is_recommended %}is-recommended-card{% endif %}">
     <a class="poster-frame"
        href="{% url 'movie_detail' movie.pk %}?city={{ selected_city|urlencode }}"
        aria-label="View {{ movie.title }}">
@@ -17,6 +17,9 @@
                 <span>{{ movie.title|slice:":1" }}</span>
                 <small>{{ movie.title }}</small>
             </div>
+        {% endif %}
+        {% if movie.is_recommended %}
+            <span class="poster-badge-recommended" title="Top Recommended / Editor's Pick">★ Recommended</span>
         {% endif %}
         <span class="poster-status {% if movie.status == 'now_showing' %}poster-status-showing{% elif movie.status == 'upcoming' %}poster-status-upcoming{% endif %}">
             {{ movie.get_status_display }}
@@ -54,7 +57,7 @@
             </a>
             <a class="btn btn-cine-quiet btn-sm"
                href="{% url 'movie_detail' movie.pk %}?city={{ selected_city|urlencode }}">
-                Details
+                View Details
             </a>
         </div>
     </div>

@@ -1,12 +1,14 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
 from movies.cities import SUPPORTED_CITIES
-from movies.models import Movie, Screen, Showtime, Theatre
+from movies.models import Movie, MoviePerson, Screen, Showtime, Theatre
 
 
 REMOVED_MOVIE_TITLES = (
@@ -21,6 +23,29 @@ REMOVED_MOVIE_TITLES = (
 
 
 SAMPLE_MOVIES = (
+    {
+        "title": "Salaar: Part 1 – Ceasefire",
+        "genre": "Action / Thriller",
+        "duration": 175,
+        "release_date": date(2023, 12, 22),
+        "language": "Telugu",
+        "poster_url": "/static/movies/images/posters/salaar.png",
+        "status": Movie.Status.NOW_SHOWING,
+        "description": (
+            "In the dystopian city-state of Khansaar, a prince faces a brutal "
+            "battle for power and turns to his exiled childhood friend Deva, "
+            "who unleashes fury to help him claim the throne."
+        ),
+        "is_featured": True,
+        "is_recommended": True,
+        "ranking": 1,
+        "cast_and_crew": (
+            ("Prashanth Neel", MoviePerson.Role.DIRECTOR, "", 1),
+            ("Prabhas", MoviePerson.Role.MAIN_CAST, "Deva / Salaar", 2),
+            ("Prithviraj Sukumaran", MoviePerson.Role.MAIN_CAST, "Varadharaja Mannaar", 3),
+            ("Shruti Haasan", MoviePerson.Role.SUPPORTING_CAST, "Aadya", 4),
+        ),
+    },
     {
         "title": "Interstellar",
         "genre": "Sci-Fi",
@@ -321,32 +346,71 @@ class Command(BaseCommand):
         created_count = 0
         existing_count = 0
 
+        # --- Seed admin user (Render deployment auto-setup) ------------------
+        admin_username = getattr(settings, "ADMIN_USERNAME", "Harsha")
+        admin_password = getattr(settings, "ADMIN_PASSWORD", "vamsi")
+        User = get_user_model()
+        admin_user, admin_created = User.objects.get_or_create(
+            username=admin_username,
+            defaults={"is_staff": True, "is_superuser": True},
+        )
+        admin_user.is_staff = True
+        admin_user.is_superuser = True
+        admin_user.set_password(admin_password)
+        admin_user.save(update_fields=["is_staff", "is_superuser", "password"])
+        action = "created" if admin_created else "updated"
+        self.stdout.write(self.style.SUCCESS(
+            f"Admin user '{admin_username}' {action} with staff/superuser privileges."
+        ))
+        # ---------------------------------------------------------------------
+
         Movie.objects.filter(title__in=REMOVED_MOVIE_TITLES).delete()
 
         for movie_data in SAMPLE_MOVIES:
             target_status = movie_data.get("status", Movie.Status.CATALOGUE)
+            cast_data = movie_data.get("cast_and_crew", ())
+            clean_movie_data = {
+                k: v for k, v in movie_data.items() if k != "cast_and_crew"
+            }
             movie, created = Movie.objects.get_or_create(
-                title=movie_data["title"],
+                title=clean_movie_data["title"],
                 defaults={
-                    **movie_data,
+                    **clean_movie_data,
                     "status": target_status,
                     "backdrop_url": "",
                     "catalogue_rating": None,
                 },
             )
             update_fields = []
-            poster_url = movie_data.get("poster_url", "")
+            poster_url = clean_movie_data.get("poster_url", "")
             if poster_url and movie.poster_url != poster_url:
                 movie.poster_url = poster_url
                 update_fields.append("poster_url")
             if target_status and movie.status != target_status:
                 movie.status = target_status
                 update_fields.append("status")
-            if movie_data.get("is_featured") and not movie.is_featured:
+            if clean_movie_data.get("is_featured") and not movie.is_featured:
                 movie.is_featured = True
                 update_fields.append("is_featured")
+            if clean_movie_data.get("is_recommended") and not movie.is_recommended:
+                movie.is_recommended = True
+                update_fields.append("is_recommended")
+            if clean_movie_data.get("ranking") and movie.ranking != clean_movie_data["ranking"]:
+                movie.ranking = clean_movie_data["ranking"]
+                update_fields.append("ranking")
             if update_fields:
                 movie.save(update_fields=update_fields)
+
+            for person_name, person_role, char_name, order in cast_data:
+                MoviePerson.objects.get_or_create(
+                    movie=movie,
+                    name=person_name,
+                    role=person_role,
+                    defaults={
+                        "character_name": char_name,
+                        "display_order": order,
+                    },
+                )
 
             created_count += int(created)
             existing_count += int(not created)

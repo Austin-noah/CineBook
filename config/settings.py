@@ -72,7 +72,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-if not DEBUG:
+if not DEBUG and 'whitenoise.middleware.WhiteNoiseMiddleware' not in MIDDLEWARE:
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 ROOT_URLCONF = 'config.urls'
@@ -130,7 +130,10 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTHENTICATION_BACKENDS = [
     "movies.authentication.UsernameOrEmailBackend",
 ]
+LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "movie_list"
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "Harsha")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "vamsi")
 
 
 # Internationalization

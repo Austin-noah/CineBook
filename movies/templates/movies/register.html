@@ -1,0 +1,93 @@
+{% extends 'movies/base.html' %}
+
+{% block title %}Create an Account | CineBook{% endblock %}
+
+{% block content %}
+<div class="container-xl page-shell">
+    <div class="auth-wrapper">
+        <section class="auth-card" aria-labelledby="register-title">
+            <div class="auth-card-header text-center mb-4">
+                <span class="auth-badge">JOIN CINEBOOK</span>
+                <h1 id="register-title" class="auth-title">Create Your Account</h1>
+                <p class="auth-subtitle">Book faster, save your favorite movies, and manage reservations.</p>
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post" novalidate class="auth-form" id="register-form">
+                {% csrf_token %}
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label">First name</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <div class="field-error-text">{{ form.first_name.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-6">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label">Last name</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <div class="field-error-text">{{ form.last_name.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <label for="{{ form.username.id_for_label }}" class="form-label">Username <span class="text-danger">*</span></label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="field-error-text">{{ form.username.errors|striptags }}</div>
+                    {% else %}
+                        <small class="form-text text-muted">{{ form.username.help_text }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="mt-3">
+                    <label for="{{ form.email.id_for_label }}" class="form-label">Email address <span class="text-danger">*</span></label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="field-error-text">{{ form.email.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-3">
+                    <label for="{{ form.password1.id_for_label }}" class="form-label">Password <span class="text-danger">*</span></label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <div class="field-error-text">{{ form.password1.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-3">
+                    <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm password <span class="text-danger">*</span></label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <div class="field-error-text">{{ form.password2.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-cine-primary w-100 py-2" id="register-btn">
+                        <span>Create Account</span>
+                    </button>
+                </div>
+            </form>
+
+            <div class="auth-footer text-center mt-4 pt-3 border-top border-secondary-subtle">
+                <p class="mb-0 text-muted">Already have a CineBook account?
+                    <a href="{% url 'login' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="auth-link">Log in here</a>
+                </p>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

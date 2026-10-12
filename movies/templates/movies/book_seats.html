@@ -58,10 +58,25 @@
     <main class="seat-layout-shell" data-seat-map
           {% if not ticket_quantity %}hidden{% endif %}>
         <div class="seat-session-strip" aria-label="Selected showtime">
-            <span>{{ showtime.show_time|time:"g:i A" }}</span>
-            <strong>{{ showtime.show_date|date:"D, d M" }}</strong>
-            <span>{{ showtime.language|default:showtime.movie.language }} · {{ showtime.format|default:"Standard" }}</span>
-            <a href="{% url 'book_seats' showtime.pk %}">Refresh availability</a>
+            <div class="session-meta">
+                <span>{{ showtime.show_time|time:"g:i A" }}</span>
+                <strong>{{ showtime.show_date|date:"D, d M" }}</strong>
+                <span>{{ showtime.language|default:showtime.movie.language }} · {{ showtime.format|default:"Standard" }}</span>
+            </div>
+            <div class="session-controls">
+                <div class="inline-quantity-selector" role="group" aria-label="Change ticket quantity">
+                    <span class="inline-qty-label">Tickets:</span>
+                    <div class="inline-qty-pills">
+                        {% for qty in "123456" %}
+                            <button type="button" class="inline-qty-btn {% if ticket_quantity|stringformat:'s' == qty %}active{% endif %}"
+                                    data-set-qty="{{ qty }}">
+                                {{ qty }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                <a href="{% url 'book_seats' showtime.pk %}" class="btn-refresh-seats">Refresh availability</a>
+            </div>
         </div>
         {% if other_showtimes %}
             <nav class="other-sessions" aria-label="Other showtimes for this movie">
@@ -102,7 +117,7 @@
                                 <small>{{ section.available_count }} available · ₹{{ section.price }} each</small>
                             </legend>
                             {% for row in section.rows %}
-                                <div class="seat-row">
+                                <div class="seat-row" data-row-code="{{ section.code }}">
                                     {% for seat in row %}
                                         <label class="seat-label" for="seat-{{ seat.number }}">
                                             <input id="seat-{{ seat.number }}"
@@ -144,7 +159,8 @@
                     </div>
 
                     <div class="booking-summary-panel" aria-live="polite">
-                        <div><span>Language</span><strong>{{ showtime.language|default:"Language not configured" }}</strong></div>
+                        <div><span>Movie</span><strong>{{ showtime.movie.title }}</strong></div>
+                        <div><span>Language</span><strong>{{ showtime.language|default:showtime.movie.language }}</strong></div>
                         {% if showtime.format %}
                             <div><span>Format</span><strong>{{ showtime.format }}</strong></div>
                         {% endif %}
@@ -154,7 +170,10 @@
                         <div class="booking-summary-total"><span>Total due at cinema</span><strong>₹<span id="total-price">0.00</span></strong></div>
                         <p class="field-error" id="seat-quantity-error" role="status"></p>
                         <button type="submit" class="btn btn-cine-primary"
-                                id="continue-booking" disabled>Reserve tickets</button>
+                                id="continue-booking" disabled>
+                            <span class="btn-text">Reserve Tickets</span>
+                            <span class="btn-spinner" hidden aria-hidden="true">⏳</span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -178,5 +197,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'movies/js/booking.js' %}?v=3" defer></script>
+<script src="{% static 'movies/js/booking.js' %}?v=4" defer></script>
 {% endblock %}

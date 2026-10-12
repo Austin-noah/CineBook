@@ -1,7 +1,87 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
 from .models import MovieReview, SeatBooking
+
+
+class UserRegistrationForm(UserCreationForm):
+    email = forms.EmailField(
+        label="Email address",
+        required=True,
+        widget=forms.EmailInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "you@example.com",
+                "autocomplete": "email",
+            }
+        ),
+    )
+    first_name = forms.CharField(
+        label="First name",
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "First name",
+                "autocomplete": "given-name",
+            }
+        ),
+    )
+    last_name = forms.CharField(
+        label="Last name",
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Last name",
+                "autocomplete": "family-name",
+            }
+        ),
+    )
+
+    class Meta(UserCreationForm.Meta):
+        model = get_user_model()
+        fields = ("username", "email", "first_name", "last_name")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "username" in self.fields:
+            self.fields["username"].widget.attrs.update(
+                {
+                    "class": "form-control",
+                    "placeholder": "Choose a username",
+                    "autocomplete": "username",
+                }
+            )
+            self.fields["username"].help_text = (
+                "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+            )
+        if "password1" in self.fields:
+            self.fields["password1"].widget.attrs.update(
+                {
+                    "class": "form-control",
+                    "placeholder": "Create a strong password",
+                    "autocomplete": "new-password",
+                }
+            )
+        if "password2" in self.fields:
+            self.fields["password2"].widget.attrs.update(
+                {
+                    "class": "form-control",
+                    "placeholder": "Repeat your password",
+                    "autocomplete": "new-password",
+                }
+            )
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email", "").strip().lower()
+        if not email:
+            raise forms.ValidationError("Please provide a valid email address.")
+        User = get_user_model()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("An account with this email address already exists. Please log in.")
+        return email
 
 
 class UsernameOrEmailAuthenticationForm(AuthenticationForm):
@@ -27,6 +107,42 @@ class UsernameOrEmailAuthenticationForm(AuthenticationForm):
             }
         ),
     )
+
+
+class AdminLoginForm(AuthenticationForm):
+    """Login form for admin users. Reuses standard Django auth but restricts to staff."""
+
+    username = forms.CharField(
+        label="Admin username",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control form-control-lg",
+                "placeholder": "Admin username",
+                "autocomplete": "username",
+                "autofocus": True,
+            }
+        ),
+    )
+    password = forms.CharField(
+        label="Password",
+        strip=False,
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "form-control form-control-lg",
+                "placeholder": "Admin password",
+                "autocomplete": "current-password",
+            }
+        ),
+    )
+
+    def confirm_login_allowed(self, user):
+        """Override: only staff or superuser accounts may use the admin login."""
+        super().confirm_login_allowed(user)
+        if not (user.is_staff or user.is_superuser):
+            raise forms.ValidationError(
+                "This account does not have administrator access.",
+                code="not_admin",
+            )
 
 
 class SeatBookingForm(forms.ModelForm):

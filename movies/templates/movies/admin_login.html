@@ -1,0 +1,64 @@
+{% extends 'movies/base.html' %}
+
+{% block title %}Admin Login | CineBook{% endblock %}
+
+{% block content %}
+<div class="container-xl page-shell">
+    <div class="auth-wrapper">
+        <section class="auth-card admin-login-card" aria-labelledby="admin-login-title">
+            <div class="auth-card-header text-center mb-4">
+                <span class="auth-badge admin-badge">&#128272; ADMIN ACCESS</span>
+                <h1 id="admin-login-title" class="auth-title">CineBook Admin</h1>
+                <p class="auth-subtitle">Restricted to authorized administrators only.</p>
+            </div>
+
+            {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    <strong>Access denied:</strong> {{ error }}
+                </div>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post" class="auth-form" id="admin-login-form" autocomplete="off">
+                {% csrf_token %}
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ form.username.id_for_label }}" class="form-label">Admin username</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="field-error-text">{{ form.username.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="field-error-text">{{ form.password.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-cine-primary w-100 py-2" id="admin-login-btn">
+                        <span>Sign in as Admin</span>
+                    </button>
+                </div>
+            </form>
+
+            <div class="auth-footer text-center mt-4 pt-3 border-top border-secondary-subtle">
+                <p class="mb-0 text-muted">
+                    Regular user? <a href="{% url 'login' %}" class="auth-link">Log in here</a>
+                </p>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}
