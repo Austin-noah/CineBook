@@ -3327,7 +3327,8 @@ html[data-theme="light"] .poster-placeholder {
     .cine-main-nav {
         position: relative;
         display: flex;
-        gap: 24px;
+        align-items: center;
+        gap: 20px;
     }
 
     .cine-main-nav > .navbar-brand {
@@ -3343,6 +3344,29 @@ html[data-theme="light"] .poster-placeholder {
         justify-content: flex-end;
     }
 
+    .cine-main-nav .nav-search-container {
+        position: relative;
+        flex: 1 1 auto;
+        max-width: clamp(240px, 28vw, 380px) !important;
+        width: 100%;
+        margin-left: 0;
+        margin-right: auto;
+    }
+
+    .cine-main-nav .nav-search {
+        position: relative;
+        left: auto;
+        transform: none;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    .cine-main-nav .nav-search input {
+        width: 100%;
+        min-width: 0;
+    }
+
     .cine-main-nav .navbar-nav {
         display: flex;
         flex-wrap: nowrap;
@@ -3351,28 +3375,12 @@ html[data-theme="light"] .poster-placeholder {
         flex: 0 0 auto;
     }
 
-    .cine-main-nav .nav-search {
-        position: absolute;
-        left: 50%;
-        width: min(34vw, 520px);
-        min-width: 0;
-        margin: 0;
-        transform: translateX(-50%);
-    }
-
-    .cine-main-nav .nav-search input {
-        width: 100%;
-        min-width: 0;
-    }
-
     .cine-main-nav .nav-actions {
+        display: flex;
+        align-items: center;
         flex-wrap: nowrap;
-    }
-}
-
-@media (min-width: 992px) and (max-width: 1199px) {
-    .cine-main-nav .nav-search {
-        width: min(19vw, 250px);
+        gap: 8px;
+        flex: 0 0 auto;
     }
 }
 
@@ -4067,6 +4075,47 @@ html[data-theme="light"] .site-footer {
 .recommended-accent {
     border-color: rgba(245, 158, 11, 0.3) !important;
     box-shadow: 0 8px 24px rgba(245, 158, 11, 0.08) !important;
+}
+
+html[data-theme="light"] .top-movie-card,
+html[data-theme="light"] .top-movie-card.recommended-accent,
+html[data-theme="light"] .recommended-accent,
+html[data-theme="light"] .is-recommended-card {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: var(--line) !important;
+    color: var(--text) !important;
+}
+
+html[data-theme="light"] .top-movie-copy {
+    background: transparent !important;
+}
+
+html[data-theme="light"] .top-movie-card.recommended-accent {
+    border-color: rgba(217, 119, 6, 0.4) !important;
+    box-shadow: 0 8px 24px rgba(217, 119, 6, 0.1) !important;
+}
+
+html[data-theme="light"] .top-movie-copy h3,
+html[data-theme="light"] .top-movie-copy h3 a {
+    color: var(--text) !important;
+}
+
+html[data-theme="light"] .top-movie-copy p,
+html[data-theme="light"] .top-movie-copy .movie-card-sub {
+    color: var(--muted) !important;
+}
+
+html[data-theme="light"] .top-card-buttons .btn-cine-quiet {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--line) !important;
+}
+
+html[data-theme="light"] .top-card-buttons .btn-cine-quiet:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.1) !important;
+    color: var(--text) !important;
+    border-color: var(--text) !important;
 }
 
 .badge-recommended-tag,

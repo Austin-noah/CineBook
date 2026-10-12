@@ -122,20 +122,6 @@ if (themeToggle) {
         updateThemeButton();
     });
     updateThemeButton();
-    window.matchMedia("(prefers-color-scheme: light)")
-        .addEventListener("change", (event) => {
-            let hasSavedPreference = false;
-            try {
-                hasSavedPreference = localStorage.getItem("cinebook-theme") !== null;
-            } catch (error) {
-                console.warn("Could not read the CineBook theme preference.", error);
-            }
-            if (!hasSavedPreference) {
-                document.documentElement.dataset.theme =
-                    event.matches ? "light" : "dark";
-                updateThemeButton();
-            }
-        });
 }
 
 document.querySelectorAll("[data-share-page]").forEach((button) => {
